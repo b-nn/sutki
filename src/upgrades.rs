@@ -17,7 +17,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                     description:
                         "Gives a boost to cats depending on how early in the month they are"
                             .to_owned(),
-                    price: 100.0,
+                    price: 500.0,
                     max: 1,
                     price_mult: 1.0,
                     count: 0,
@@ -25,7 +25,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                         for i in 0..x.cat_multipliers.len() {
                             x.cat_multipliers[i] += 1.036_f64.powi(31 - i as i32);
                         }
-                        x.upgrades[1].price = 500.0;
+                        x.upgrades[1].price = 1500.0;
                     },
                 }),
                 Box::new(Upgrade {
@@ -33,7 +33,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                     description:
                         "Gives a boost to cats depending on how late in the month they are"
                             .to_owned(),
-                    price: 100.0,
+                    price: 500.0,
                     price_mult: 1.0,
                     max: 1,
                     count: 0,
@@ -41,7 +41,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                         for i in 0..x.cat_multipliers.len() {
                             x.cat_multipliers[i] += 1.036_f64.powi(i as i32);
                         }
-                        x.upgrades[0].price = 500.0;
+                        x.upgrades[0].price = 1500.0;
                     },
                 }),
                 Box::new(Upgrade {
@@ -50,7 +50,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                         .to_owned(),
                     price: 200.0,
                     price_mult: 1.4,
-                    max: 30,
+                    max: 20,
                     count: 0,
                     effect: |x, y| {
                         x.day_offset += x.dt * (2_f64.powi(y as i32) - 1.0);
@@ -74,7 +74,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                     description: "Buying cats increases the base production of all other cats"
                         .to_owned(),
                     price: 10000.0,
-                    price_mult: 1.4,
+                    price_mult: 1.0,
                     max: 1,
                     count: 0,
                     effect: |x, _y| {
@@ -91,7 +91,7 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                     description: "Gives a temporary boost to cats when they get the 'Extra Effective' boost which falls off over time"
                         .to_owned(),
                     price: 10000.0,
-                    price_mult: 1.4,
+                    price_mult: 1.0,
                     max: 1,
                     count: 0,
                     effect: |x, _y| {

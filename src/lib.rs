@@ -1,7 +1,7 @@
 use chrono::{self, DateTime, Datelike, Duration, Local, NaiveTime, Utc};
 use eframe::egui;
 use egui::RichText;
-use log::log;
+use log::{log, Level};
 
 // fn main() {
 //     let native_options = eframe::NativeOptions::default();
@@ -33,6 +33,12 @@ pub struct MyEguiApp {
     currency: f64,
     colors: [egui::Color32; 1],
     upgrades: Vec<Box<Upgrade>>,
+    strawberries: f64,
+    cat_strawberries: [i64; 31],
+    cat_strawberry_prices: [i64; 31],
+    unlocked_tiers: [bool; 1],
+    status: String,
+    status_time: DateTime<Local>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -49,7 +55,11 @@ pub struct SaveStruct {
     cat_times: [f64; 31],
     currency: f64,
     colors: [egui::Color32; 1],
-    upgrades: Vec<(String, i64)>,
+    upgrades: Vec<(String, i64, i64)>,
+    strawberries: f64,
+    cat_strawberries: [i64; 31],
+    cat_strawberry_prices: [i64; 31],
+    unlocked_tiers: [bool; 1],
 }
 
 impl Default for SaveStruct {
@@ -66,6 +76,10 @@ impl Default for SaveStruct {
             cat_times: [0.0; 31],
             colors: [egui::Color32::from_hex("#FF784F").unwrap()],
             upgrades: vec![],
+            strawberries: 0.0,
+            cat_strawberries: [0; 31],
+            cat_strawberry_prices: [1; 31],
+            unlocked_tiers: [false; 1],
         }
     }
 }
@@ -85,6 +99,12 @@ impl Default for MyEguiApp {
             cat_times: [0.0; 31],
             colors: [egui::Color32::from_hex("#FF784F").unwrap()],
             upgrades: upgrades::get_upgrades(),
+            strawberries: 0.0,
+            cat_strawberries: [0; 31],
+            cat_strawberry_prices: [1; 31],
+            unlocked_tiers: [false; 1],
+            status: "Opened game".to_owned(),
+            status_time: Local::now(),
         }
     }
 }
@@ -105,11 +125,15 @@ impl MyEguiApp {
             for i in default_upgrades {
                 let mut upgrade = i;
                 for j in &t.upgrades {
-                    if &j.0 == &upgrade.text {
-                        upgrade.count = j.1;
-                        upgrade.price = upgrade.price * upgrade.price_mult.powi(j.1 as i32);
-                        break;
+                    if &j.0 != &upgrade.text {
+                        continue;
                     }
+                    if &j.2 != &upgrade.max {
+                        continue;
+                    }
+                    upgrade.count = j.1;
+                    upgrade.price = upgrade.price * upgrade.price_mult.powi(j.1 as i32);
+                    break;
                 }
                 final_upgrades.push(upgrade);
             }
@@ -126,6 +150,12 @@ impl MyEguiApp {
                 currency: t.currency,
                 colors: t.colors,
                 upgrades: final_upgrades,
+                strawberries: t.strawberries,
+                cat_strawberries: t.cat_strawberries,
+                cat_strawberry_prices: t.cat_strawberry_prices,
+                unlocked_tiers: t.unlocked_tiers,
+                status: "Opened game".to_owned(),
+                status_time: Local::now(),
             }
         } else {
             Default::default()
@@ -149,6 +179,7 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
         } else {
             app.cat_times[i] = -0.05;
         }
+        app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
     }
 
     cps += app
@@ -169,7 +200,7 @@ fn within_day_range(day: f64, width: f64, i: f64) -> bool {
             false
         }
     } else {
-        if (i >= day || i <= (day + width).rem_euclid(31.0)) {
+        if i >= day || i <= (day + width).rem_euclid(31.0) {
             true
         } else {
             false
@@ -223,6 +254,23 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                 app.cats[i] += 1.0;
                 app.cat_prices[i] *= app.cat_price_multipliers[i];
             }
+
+            if app.unlocked_tiers[0] {
+                if ui
+                    .add_enabled(
+                        app.strawberries >= app.cat_strawberry_prices[i].pow(2) as f64,
+                        egui::Button::new(format!(
+                            "Feed cat {} strawberry",
+                            app.cat_strawberry_prices[i].pow(2)
+                        )),
+                    )
+                    .clicked()
+                {
+                    app.strawberries -= app.cat_strawberry_prices[i].pow(2) as f64;
+                    app.cat_strawberries[i] += 1;
+                    app.cat_strawberry_prices[i] += 1;
+                }
+            }
         });
     }
 }
@@ -233,7 +281,7 @@ impl eframe::App for MyEguiApp {
             dt: self.dt,
             cats: self.cats,
             cat_multipliers: self.cat_multipliers,
-            day_offset: self.day_offset,
+            day_offset: 0.0,
             day_width: self.day_width,
             cat_prices: self.cat_prices,
             cat_price_multipliers: self.cat_price_multipliers,
@@ -243,11 +291,17 @@ impl eframe::App for MyEguiApp {
             upgrades: self
                 .upgrades
                 .iter()
-                .map(|x| (x.text.to_owned(), x.count))
+                .map(|x| (x.text.to_owned(), x.count, x.max))
                 .collect(),
+            strawberries: self.strawberries,
+            cat_strawberries: self.cat_strawberries,
+            cat_strawberry_prices: self.cat_strawberry_prices,
+            unlocked_tiers: self.unlocked_tiers,
         };
         eframe::set_value(storage, eframe::APP_KEY, &t);
-        println!("saved!");
+        log!(Level::Info, "Saved!");
+        self.status = "Saved!".to_owned();
+        self.status_time = Local::now();
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -257,16 +311,27 @@ impl eframe::App for MyEguiApp {
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
-                if !is_web {
-                    ui.menu_button("File", |ui| {
+                ui.menu_button("File", |ui| {
+                    if !is_web {
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
-                    });
-                    ui.add_space(16.0);
-                }
+                    }
+                    if ui.button("Reset").clicked() {
+                        *self = MyEguiApp::default();
+                    }
+                });
+                ui.add_space(16.0);
 
                 egui::widgets::global_theme_preference_buttons(ui);
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(format!(
+                        "{} {}s ago",
+                        self.status,
+                        (Local::now() - self.status_time).num_seconds(),
+                    ));
+                });
             });
         });
 
@@ -279,6 +344,9 @@ impl eframe::App for MyEguiApp {
                 self.currency.round(),
                 cps
             ));
+            if self.unlocked_tiers[0] {
+                ui.label(format!("You have {} strawberries.", self.strawberries));
+            }
             let tomorrow_midnight = (date + Duration::days(1))
                 .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
                 .unwrap();
@@ -319,6 +387,25 @@ impl eframe::App for MyEguiApp {
                         self.upgrades[i].price *= self.upgrades[i].price_mult;
                         self.upgrades[i].count += 1;
                     }
+                }
+
+                if ui
+                    .add_enabled(
+                        self.cats.iter().sum::<f64>() >= 60.0,
+                        egui::Button::new(format!(
+                            "Prestige for {:.2} strawberries",
+                            self.cats.iter().sum::<f64>() / 30.0 - 1.0
+                        )),
+                    )
+                    .clicked()
+                {
+                    self.strawberries += self.cats.iter().sum::<f64>() / 30.0 - 1.0;
+                    self.cat_prices = [1.0; 31];
+                    self.cats = [0.0; 31];
+                    self.upgrades = get_upgrades();
+                    self.currency = 1.0;
+                    self.day_width = 0;
+                    self.unlocked_tiers[0] = true;
                 }
             });
 
