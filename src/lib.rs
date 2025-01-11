@@ -12,21 +12,17 @@ use log::log;
 //     );
 // }
 
+pub mod upgrades;
+use upgrades::Upgrade;
+
 pub trait Update {
     fn update(&self);
 }
 
-struct Upgrade {
-    text: String,
-    description: String,
-    price: f64,
-    price_mult: f64,
-    max: i64,
-    count: i64,
-    effect: fn(&mut MyEguiApp, i64),
-}
-
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct MyEguiApp {
+    #[serde(skip)]
     time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
@@ -39,18 +35,27 @@ pub struct MyEguiApp {
     cat_times: [f64; 31],
     currency: f64,
     colors: [egui::Color32; 1],
+    #[serde(skip)]
     upgrades: Vec<Box<Upgrade>>,
 }
 
-impl MyEguiApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
-        // Restore app state using cc.storage (requires the "persistence" feature).
-        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
-        // for e.g. egui::PaintCallback.
-        //
+pub struct SaveStruct {
+    dt: f64,
+    cats: [f64; 31],
+    cat_multipliers: [f64; 31],
+    day_offset: f64,
+    day_width: i64,
+    //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
+    cat_prices: [f64; 31],
+    cat_price_multipliers: [f64; 31],
+    cat_times: [f64; 31],
+    currency: f64,
+    colors: [egui::Color32; 1],
+}
 
-        let temp = MyEguiApp {
+impl Default for MyEguiApp {
+    fn default() -> Self {
+        Self {
             time: Local::now(),
             dt: 0.0,
             cats: [0.0; 31],
@@ -62,99 +67,24 @@ impl MyEguiApp {
             currency: 1.0,
             cat_times: [0.0; 31],
             colors: [egui::Color32::from_hex("#FF784F").unwrap()],
-            upgrades: vec![
-                Box::new(Upgrade {
-                    text: "Early Bird".to_owned(),
-                    description:
-                        "Gives a boost to cats depending on how early in the month they are"
-                            .to_owned(),
-                    price: 100.0,
-                    max: 1,
-                    price_mult: 1.0,
-                    count: 0,
-                    effect: |x, _y| {
-                        for i in 0..x.cat_multipliers.len() {
-                            x.cat_multipliers[i] += 1.036_f64.powi(31 - i as i32);
-                        }
-                        x.upgrades[1].price = 500.0;
-                    },
-                }),
-                Box::new(Upgrade {
-                    text: "Late Bird".to_owned(),
-                    description:
-                        "Gives a boost to cats depending on how late in the month they are"
-                            .to_owned(),
-                    price: 100.0,
-                    price_mult: 1.0,
-                    max: 1,
-                    count: 0,
-                    effect: |x, _y| {
-                        for i in 0..x.cat_multipliers.len() {
-                            x.cat_multipliers[i] += 1.036_f64.powi(i as i32);
-                        }
-                        x.upgrades[0].price = 500.0;
-                    },
-                }),
-                Box::new(Upgrade {
-                    text: "Faster Spin".to_owned(),
-                    description: "Makes the 'Extra Effective' boost cycle through 50% faster"
-                        .to_owned(),
-                    price: 200.0,
-                    price_mult: 1.4,
-                    max: 30,
-                    count: 0,
-                    effect: |x, y| {
-                        x.day_offset += x.dt * (2_f64.powi(y as i32) - 1.0);
-                    },
-                }),
-                Box::new(Upgrade {
-                    text: "..Wider Spin?".to_owned(),
-                    description:
-                        "Makes an additional cat get the 'Extra Effective' boost at the same time"
-                            .to_owned(),
-                    price: 1000.0,
-                    price_mult: 1.4,
-                    max: 15,
-                    count: 0,
-                    effect: |x, y| {
-                        x.day_width = y;
-                    },
-                }),
-                Box::new(Upgrade {
-                    text: "Cat Synergy".to_owned(),
-                    description: "Buying cats increases the base production of all other cats"
-                        .to_owned(),
-                    price: 10000.0,
-                    price_mult: 1.4,
-                    max: 1,
-                    count: 0,
-                    effect: |x, _y| {
-                        for i in 0..x.cat_multipliers.len() {
-                            x.cat_multipliers[i] *=
-                                x.cats.iter().enumerate().map(|(x, y)| if x == i  {
-                                    0.0
-                                } else{*y * 0.01}).sum::<f64>() + 1.0;
-                        }
-                    },
-                }),
-                Box::new(Upgrade {
-                    text: "Like Hot Cakes".to_owned(),
-                    description: "Gives a temporary boost to cats when they get the 'Extra Effective' boost which falls off over time"
-                        .to_owned(),
-                    price: 10000.0,
-                    price_mult: 1.4,
-                    max: 1,
-                    count: 0,
-                    effect: |x, _y| {
-                        for i in 0..x.cat_multipliers.len() {
-                            if x.cat_times[i] < 0.0 { continue; }
-                            x.cat_multipliers[i] *= 1.2f64.powf(5.0 - x.cat_times[i]) + 1.0;
-                        }
-                    },
-                }),
-            ],
-        };
-        temp
+            upgrades: upgrades::get_upgrades(),
+        }
+    }
+}
+
+impl MyEguiApp {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
+        // Restore app state using cc.storage (requires the "persistence" feature).
+        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
+        // for e.g. egui::PaintCallback.
+
+        // if let Some(storage) = cc.storage {
+        //     let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        //     t
+        // }
+
+        Default::default()
     }
 }
 
@@ -229,8 +159,12 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
             if ui
                 .add_enabled(
                     app.cat_prices[i] <= app.currency,
-                    egui::Button::new(format!("Hire another cat {:.2}", app.cat_prices[i])),
+                    egui::Button::new(format!("Hire another cat {:.2}$", app.cat_prices[i])),
                 )
+                .on_hover_text(format!(
+                    "x{} to self, x5 to all other unbought cats",
+                    app.cat_price_multipliers[i],
+                ))
                 .clicked()
             {
                 app.currency -= app.cat_prices[i];
@@ -268,35 +202,39 @@ impl eframe::App for MyEguiApp {
                 (tomorrow_midnight - date).num_seconds(),
             ));
 
-            cat_handler(self, ui, day);
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.set_min_width(330.0);
 
-            for i in 0..self.upgrades.len() {
-                let price = self.upgrades[i].price;
-                if ui
-                    .add_enabled(
-                        price <= self.currency && self.upgrades[i].count < self.upgrades[i].max,
-                        egui::Button::new(format!(
-                            "{} {:.2}$ [{}/{}]",
-                            self.upgrades[i].text,
-                            price,
-                            self.upgrades[i].count,
-                            self.upgrades[i].max
-                        )),
-                    )
-                    .on_hover_text(&self.upgrades[i].description)
-                    .on_disabled_hover_text(format!(
-                        "[{}s, x{}] {}",
-                        ((price - self.currency) / cps).ceil(),
-                        self.upgrades[i].price_mult,
-                        self.upgrades[i].description
-                    ))
-                    .clicked()
-                {
-                    self.currency -= self.upgrades[i].price;
-                    self.upgrades[i].price *= self.upgrades[i].price_mult;
-                    self.upgrades[i].count += 1;
+                cat_handler(self, ui, day);
+
+                for i in 0..self.upgrades.len() {
+                    let price = self.upgrades[i].price;
+                    if ui
+                        .add_enabled(
+                            price <= self.currency && self.upgrades[i].count < self.upgrades[i].max,
+                            egui::Button::new(format!(
+                                "{} {:.2}$ [{}/{}]",
+                                self.upgrades[i].text,
+                                price,
+                                self.upgrades[i].count,
+                                self.upgrades[i].max
+                            )),
+                        )
+                        .on_hover_text(&self.upgrades[i].description)
+                        .on_disabled_hover_text(format!(
+                            "[{}s, x{}] {}",
+                            ((price - self.currency) / cps).ceil(),
+                            self.upgrades[i].price_mult,
+                            self.upgrades[i].description
+                        ))
+                        .clicked()
+                    {
+                        self.currency -= self.upgrades[i].price;
+                        self.upgrades[i].price *= self.upgrades[i].price_mult;
+                        self.upgrades[i].count += 1;
+                    }
                 }
-            }
+            });
 
             // ui.hyperlink("https://github.com/emilk/egui");
             // ui.text_edit_singleline(&mut self.label);
