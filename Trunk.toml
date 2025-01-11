@@ -1,5 +1,5 @@
 [build]
 filehash = false
 dist = "docs"
-# public_url = "https://b-nn.github.io/clidle/"
+public_url = "https://b-nn.github.io/clidle/"
 # WARNING: REMEMBER TO CHANGE THE PUBLIC IRL IF YOU EVER SWITCH TO A CUSTOM URL OR ELSE EVERYTHING WILL (PROBABLY) BREAK
