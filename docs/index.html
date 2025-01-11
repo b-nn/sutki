@@ -7,13 +7,13 @@
 
 <head>
     <!-- change this to your project name -->
-    <title>Tester</title>
+    <title>sutki</title>
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     
-<script type="module" nonce="zIZu3BiyRzbYW2J2Wo0YZw==">
-import init, * as bindings from 'https://b-nn.github.io/clidle/r2024-12-27-clidle.js';
-const wasm = await init({ module_or_path: 'https://b-nn.github.io/clidle/r2024-12-27-clidle_bg.wasm' });
+<script type="module" nonce="HDrL+Y+ORhmgnbqYXaHY9Q==">
+import init, * as bindings from '/r2024-12-27-clidle.js';
+const wasm = await init({ module_or_path: '/r2024-12-27-clidle_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -23,9 +23,9 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script>
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-    <base href="https://b-nn.github.io/clidle/" />
+    <base href="/" />
 
-    <link rel="icon" href="https://b-nn.github.io/clidle/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
+    <link rel="icon" href="/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
 
 
     
@@ -127,7 +127,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="https://b-nn.github.io/clidle/r2024-12-27-clidle.js" crossorigin=anonymous integrity="sha384-uG/bUgcqEckawF6ib/EJI9vWVcXfGzszDqzMVZpPM2xkF96gf/Yyzmr3cb+w9JvA"><link rel="preload" href="https://b-nn.github.io/clidle/r2024-12-27-clidle_bg.wasm" crossorigin=anonymous integrity="sha384-XM0iBJ42iSpaXk9ZjO9nMFEeXWEw+tEZNfpepDkuT1G6tnSOjG+FzOvKJ3UouFnB" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/r2024-12-27-clidle.js" crossorigin=anonymous integrity="sha384-+PRm7GGoXbidN/OyQxoGs0Lqr0Pa3yLPCPsflhmNLtZfRRu5bkIjxAriqw4oKUfm"><link rel="preload" href="/r2024-12-27-clidle_bg.wasm" crossorigin=anonymous integrity="sha384-hkTIRNyL10AHw58Y+Jf+UXPKLwCUtD6RHlg2DYKZZZj2aaRw9Zo4U9gGlDFcRx5+" as="fetch" type="application/wasm"></head>
 
 <body>
     <!-- The WASM code will resize the canvas dynamically -->

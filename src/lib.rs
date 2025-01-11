@@ -13,16 +13,13 @@ use log::log;
 // }
 
 pub mod upgrades;
-use upgrades::Upgrade;
+use upgrades::{get_upgrades, Upgrade};
 
 pub trait Update {
     fn update(&self);
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)]
 pub struct MyEguiApp {
-    #[serde(skip)]
     time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
@@ -35,10 +32,11 @@ pub struct MyEguiApp {
     cat_times: [f64; 31],
     currency: f64,
     colors: [egui::Color32; 1],
-    #[serde(skip)]
     upgrades: Vec<Box<Upgrade>>,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct SaveStruct {
     dt: f64,
     cats: [f64; 31],
@@ -51,6 +49,25 @@ pub struct SaveStruct {
     cat_times: [f64; 31],
     currency: f64,
     colors: [egui::Color32; 1],
+    upgrades: Vec<(String, i64)>,
+}
+
+impl Default for SaveStruct {
+    fn default() -> Self {
+        Self {
+            dt: 0.0,
+            cats: [0.0; 31],
+            cat_multipliers: [1.0; 31],
+            cat_prices: [1.0; 31],
+            cat_price_multipliers: [1.5; 31],
+            day_offset: 1.0,
+            day_width: 0,
+            currency: 1.0,
+            cat_times: [0.0; 31],
+            colors: [egui::Color32::from_hex("#FF784F").unwrap()],
+            upgrades: vec![],
+        }
+    }
 }
 
 impl Default for MyEguiApp {
@@ -79,12 +96,40 @@ impl MyEguiApp {
         // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
         // for e.g. egui::PaintCallback.
 
-        // if let Some(storage) = cc.storage {
-        //     let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        //     t
-        // }
+        if let Some(storage) = cc.storage {
+            let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
-        Default::default()
+            let default_upgrades = get_upgrades();
+
+            let mut final_upgrades = vec![];
+            for i in default_upgrades {
+                let mut upgrade = i;
+                for j in &t.upgrades {
+                    if &j.0 == &upgrade.text {
+                        upgrade.count = j.1;
+                        upgrade.price = upgrade.price * upgrade.price_mult.powi(j.1 as i32);
+                        break;
+                    }
+                }
+                final_upgrades.push(upgrade);
+            }
+            MyEguiApp {
+                time: Local::now(),
+                dt: t.dt,
+                cats: t.cats,
+                cat_multipliers: t.cat_multipliers,
+                day_offset: t.day_offset,
+                day_width: t.day_width,
+                cat_prices: t.cat_prices,
+                cat_price_multipliers: t.cat_price_multipliers,
+                cat_times: t.cat_times,
+                currency: t.currency,
+                colors: t.colors,
+                upgrades: final_upgrades,
+            }
+        } else {
+            Default::default()
+        }
     }
 }
 
@@ -183,11 +228,52 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
 }
 
 impl eframe::App for MyEguiApp {
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        let t = SaveStruct {
+            dt: self.dt,
+            cats: self.cats,
+            cat_multipliers: self.cat_multipliers,
+            day_offset: self.day_offset,
+            day_width: self.day_width,
+            cat_prices: self.cat_prices,
+            cat_price_multipliers: self.cat_price_multipliers,
+            cat_times: self.cat_times,
+            currency: self.currency,
+            colors: self.colors,
+            upgrades: self
+                .upgrades
+                .iter()
+                .map(|x| (x.text.to_owned(), x.count))
+                .collect(),
+        };
+        eframe::set_value(storage, eframe::APP_KEY, &t);
+        println!("saved!");
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            // The top panel is often a good place for a menu bar:
+
+            egui::menu::bar(ui, |ui| {
+                // NOTE: no File->Quit on web pages!
+                let is_web = cfg!(target_arch = "wasm32");
+                if !is_web {
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Quit").clicked() {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        }
+                    });
+                    ui.add_space(16.0);
+                }
+
+                egui::widgets::global_theme_preference_buttons(ui);
+            });
+        });
+
         let date = Utc::now() + Duration::seconds(self.day_offset as i64);
         let (cps, day) = update(self, date);
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("clidle [W.I.P. name]");
+            ui.heading("sutki [W.I.P. name]");
             ui.label(format!(
                 "You currently have {}$ (+{:.2}$/s)",
                 self.currency.round(),
