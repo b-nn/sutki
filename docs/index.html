@@ -11,9 +11,9 @@
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     
-<script type="module" nonce="HCz0boy9Th9NFOiTW1mjEw==">
-import init, * as bindings from 'https://b-nn.github.io/clidle/r2024-12-27-sutki.js';
-const wasm = await init({ module_or_path: 'https://b-nn.github.io/clidle/r2024-12-27-sutki_bg.wasm' });
+<script type="module" nonce="VQzBuNrHOgADWq3VHMA0cA==">
+import init, * as bindings from 'https://b-nn.github.io/sutki/r2024-12-27-sutki.js';
+const wasm = await init({ module_or_path: 'https://b-nn.github.io/sutki/r2024-12-27-sutki_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -23,9 +23,9 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script>
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-    <base href="https://b-nn.github.io/clidle/" />
+    <base href="https://b-nn.github.io/sutki/" />
 
-    <link rel="icon" href="https://b-nn.github.io/clidle/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
+    <link rel="icon" href="https://b-nn.github.io/sutki/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
 
 
     
@@ -127,7 +127,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="https://b-nn.github.io/clidle/r2024-12-27-sutki.js" crossorigin=anonymous integrity="sha384-KYF+ZpS3AQw/2X2j3W5C6X+ly/KxC1ySL3G579GMyHyQqySx/SPBJasLhi8mE6XI"><link rel="preload" href="https://b-nn.github.io/clidle/r2024-12-27-sutki_bg.wasm" crossorigin=anonymous integrity="sha384-zmr+RBujSvOslVjid5zMaHH01snOVQe07hkZRurCqXgKumkja11UkplZcUIZPrEX" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="https://b-nn.github.io/sutki/r2024-12-27-sutki.js" crossorigin=anonymous integrity="sha384-KYF+ZpS3AQw/2X2j3W5C6X+ly/KxC1ySL3G579GMyHyQqySx/SPBJasLhi8mE6XI"><link rel="preload" href="https://b-nn.github.io/sutki/r2024-12-27-sutki_bg.wasm" crossorigin=anonymous integrity="sha384-zmr+RBujSvOslVjid5zMaHH01snOVQe07hkZRurCqXgKumkja11UkplZcUIZPrEX" as="fetch" type="application/wasm"></head>
 
 <body>
     <!-- The WASM code will resize the canvas dynamically -->
