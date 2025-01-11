@@ -1,8 +1,7 @@
-use std::time::Instant;
-
-use chrono::{self, DateTime, Datelike, Duration, NaiveTime, Utc};
+use chrono::{self, DateTime, Datelike, Duration, Local, NaiveTime, Utc};
 use eframe::egui;
 use egui::RichText;
+use log::log;
 
 // fn main() {
 //     let native_options = eframe::NativeOptions::default();
@@ -28,7 +27,7 @@ struct Upgrade {
 }
 
 pub struct MyEguiApp {
-    time: Instant,
+    time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
     cat_multipliers: [f64; 31],
@@ -52,7 +51,7 @@ impl MyEguiApp {
         //
 
         let temp = MyEguiApp {
-            time: Instant::now(),
+            time: Local::now(),
             dt: 0.0,
             cats: [0.0; 31],
             cat_multipliers: [1.0; 31],
@@ -320,8 +319,8 @@ impl eframe::App for MyEguiApp {
             //     ui.label("Not much, as it turns out");
             // });
         });
-        self.dt = self.time.elapsed().as_micros() as f64 * 1e-6;
-        self.time = Instant::now();
+        self.dt = (Local::now() - self.time).num_microseconds().unwrap() as f64 * 1e-6;
+        self.time = Local::now();
         ctx.request_repaint();
     }
 }
