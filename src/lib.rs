@@ -1,6 +1,6 @@
 use chrono::{self, DateTime, Datelike, Duration, Local, NaiveTime, Utc};
 use eframe::egui;
-use egui::RichText;
+use egui::{debug_text::print, RichText};
 use log::{log, Level};
 
 // fn main() {
@@ -29,6 +29,7 @@ pub struct MyEguiApp {
     //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
     cat_prices: [f64; 31],
     cat_price_multipliers: [f64; 31],
+    cat_price_5_multiplier: [f64; 31],
     cat_times: [f64; 31],
     currencies: [f64; 2],
     colors: [egui::Color32; 1],
@@ -39,6 +40,13 @@ pub struct MyEguiApp {
     status: String,
     status_time: DateTime<Local>,
     currency_symbols: [char; 2],
+    asleep: bool,
+}
+
+fn change_status(level: Level, message: &str, status: &mut String, time: &mut DateTime<Local>) {
+    *status = message.to_owned();
+    *time = Local::now();
+    log!(level, "{}", message);
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -55,6 +63,7 @@ pub struct SaveStruct {
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
     unlocked_tiers: [bool; 2],
+    cat_price_5_multiplier: [f64; 31],
 }
 
 impl Default for SaveStruct {
@@ -70,6 +79,7 @@ impl Default for SaveStruct {
             cat_strawberries: [0; 31],
             cat_strawberry_prices: [1; 31],
             unlocked_tiers: [true, false],
+            cat_price_5_multiplier: [0.0; 31],
         }
     }
 }
@@ -95,6 +105,8 @@ impl Default for MyEguiApp {
             status: "Opened game".to_owned(),
             status_time: Local::now(),
             currency_symbols: ['$', '🍓'],
+            cat_price_5_multiplier: [0.0; 31],
+            asleep: false,
         }
     }
 }
@@ -140,6 +152,7 @@ impl MyEguiApp {
                 unlocked_tiers: t.unlocked_tiers,
                 status: "Opened game".to_owned(),
                 status_time: Local::now(),
+                cat_price_5_multiplier: t.cat_price_5_multiplier,
                 ..Default::default()
             }
         } else {
@@ -150,6 +163,7 @@ impl MyEguiApp {
 
 fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
     app.cat_multipliers = [1.0; 31];
+    app.cat_prices = [1.0; 31];
     let day = date.day0() as f64;
     let mut cps = 0.0;
     for i in 0..app.upgrades.len() {
@@ -158,11 +172,16 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
         }
     }
     for i in 0..app.cats.len() {
-        if within_day_range(day, app.day_width as f64, i as f64) {
+        app.cat_prices[i] = if app.asleep {
+            1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
+        } else {
+            1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
+        };
+        if within_day_range(day, app.day_width as f64, i as f64) && !app.asleep {
             app.cat_multipliers[i] *= 1.5;
             app.cat_times[i] += app.dt;
         } else {
-            app.cat_times[i] = -0.05;
+            app.cat_times[i] = -0.00001;
         }
         app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
     }
@@ -197,7 +216,7 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
     let mut count = 0;
     for i in 0..app.cats.len() {
         ui.horizontal(|ui| {
-            if within_day_range(day, app.day_width as f64, i as f64) {
+            if within_day_range(day, app.day_width as f64, i as f64) && !app.asleep {
                 count += 1;
                 ui.label(
                     RichText::new(format!(
@@ -207,7 +226,8 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                         app.cat_multipliers[i]
                     ))
                     .color(app.colors[0]),
-                );
+                )
+                .on_hover_text("This cat is Extra Effective!");
             } else {
                 ui.label(format!(
                     "You have {} 'Day {}' cats [{:.2}]",
@@ -232,12 +252,11 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                 if app.cats[i] == 0.0 {
                     for j in 0..app.cat_prices.len() {
                         if i != j && app.cats[j] == 0.0 {
-                            app.cat_prices[j] *= 5.0;
+                            app.cat_price_5_multiplier[j] += 1.0;
                         }
                     }
                 }
                 app.cats[i] += 1.0;
-                app.cat_prices[i] *= app.cat_price_multipliers[i];
             }
 
             if app.unlocked_tiers[1] {
@@ -277,11 +296,15 @@ impl eframe::App for MyEguiApp {
             cat_strawberries: self.cat_strawberries,
             cat_strawberry_prices: self.cat_strawberry_prices,
             unlocked_tiers: self.unlocked_tiers,
+            cat_price_5_multiplier: self.cat_price_5_multiplier,
         };
         eframe::set_value(storage, eframe::APP_KEY, &t);
-        log!(Level::Info, "Saved!");
-        self.status = "Saved!".to_owned();
-        self.status_time = Local::now();
+        change_status(
+            Level::Info,
+            "Saved!",
+            &mut self.status,
+            &mut self.status_time,
+        );
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -335,8 +358,9 @@ impl eframe::App for MyEguiApp {
                 .unwrap();
 
             ui.label(format!(
-                "{} seconds until tomorrow.",
-                (tomorrow_midnight - date).num_seconds(),
+                "{:.2} seconds until tomorrow.",
+                (tomorrow_midnight - date).num_seconds() as f64
+                    / 2_f64.powi(self.upgrades[2].count as i32),
             ));
 
             egui::ScrollArea::vertical().show(ui, |ui| {
@@ -400,6 +424,8 @@ impl eframe::App for MyEguiApp {
                     self.day_width = 0;
                     self.unlocked_tiers[1] = true;
                     self.day_offset = 0.0;
+                    self.asleep = false;
+                    self.cat_price_5_multiplier = [0.0; 31];
                 }
             });
 

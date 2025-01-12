@@ -66,8 +66,8 @@ pub fn get_upgrades() -> Vec<Upgrade> {
                 "Makes an additional cat get the 'Extra Effective' boost at the same time"
                     .to_owned(),
             price: 1000.0,
-            price_mult: 1.4,
-            max: 15,
+            price_mult: 1.3,
+            max: 25,
             count: 0,
             effect: |x, y| {
                 x.day_width = y;
@@ -83,6 +83,7 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             max: 1,
             count: 0,
             effect: |x, _y| {
+                if x.asleep { return; }
                 for i in 0..x.cat_multipliers.len() {
                     x.cat_multipliers[i] *=
                         x.cats.iter().enumerate().map(|(x, y)| if x == i  {
@@ -101,16 +102,30 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             max: 1,
             count: 0,
             effect: |x, _y| {
+                if x.asleep { return; }
                 for i in 0..x.cat_multipliers.len() {
-                    if x.cat_times[i] < 0.0 { continue; }
+                    if x.cat_times[i] < 0.0 || x.asleep { continue; }
                     x.cat_multipliers[i] *= 1.2f64.powf(5.0 - x.cat_times[i]) + 1.0;
                 }
             },
             tier: 0
         },
         Upgrade {
+            text: "Sleep".to_owned(),
+            description: "Disables the 'Extra Effective' boost and the previous 2 upgrades, but makes cats much cheaper"
+                .to_owned(),
+            price: 15000.0,
+            price_mult: 1.0,
+            max: 1,
+            count: 0,
+            effect: |x, _y| {
+                x.asleep = true;
+            },
+            tier: 0
+        },
+        Upgrade {
             text: "Appetizing aroma".to_owned(),
-            description: "Increases the base production of all cats based on how many strawberries you have"
+            description: "Increases the production of all cats based on how many strawberries you have"
                 .to_owned(),
             price: 5.0,
             price_mult: 1.0,
