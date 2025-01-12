@@ -39,7 +39,6 @@ pub struct MyEguiApp {
     status: String,
     status_time: DateTime<Local>,
     currency_symbols: [char; 2],
-    base_cat_production: [f64; 31],
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -95,7 +94,6 @@ impl Default for MyEguiApp {
             unlocked_tiers: [true, false],
             status: "Opened game".to_owned(),
             status_time: Local::now(),
-            base_cat_production: [1.0; 31],
             currency_symbols: ['$', '🍓'],
         }
     }
@@ -393,13 +391,10 @@ impl eframe::App for MyEguiApp {
                     self.cat_prices = [1.0; 31];
                     self.cats = [0.0; 31];
                     for i in 0..self.upgrades.len() {
-                        println!("1: {}", self.upgrades[i].tier);
                         if self.upgrades[i].tier < 1 {
                             let mut t = get_upgrades();
                             self.upgrades[i] = t.remove(i);
-                            println!("blehhhh");
                         }
-                        println!("2: {}", self.upgrades[i].tier);
                     }
                     self.currencies[0] = 1.0;
                     self.day_width = 0;
