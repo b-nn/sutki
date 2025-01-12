@@ -23,7 +23,6 @@ pub struct MyEguiApp {
     time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
-    cat_base_production: [f64; 31],
     cat_multipliers: [f64; 31],
     day_offset: f64,
     day_width: i64,
@@ -33,7 +32,7 @@ pub struct MyEguiApp {
     cat_times: [f64; 31],
     currencies: [f64; 2],
     colors: [egui::Color32; 1],
-    upgrades: Vec<Box<Upgrade>>,
+    upgrades: Vec<Upgrade>,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
     unlocked_tiers: [bool; 2],
@@ -83,7 +82,6 @@ impl Default for MyEguiApp {
             dt: 0.0,
             cats: [0.0; 31],
             cat_multipliers: [1.0; 31],
-            cat_base_production: [1.0; 31],
             cat_prices: [1.0; 31],
             cat_price_multipliers: [1.5; 31],
             day_offset: 1.0,
@@ -154,7 +152,6 @@ impl MyEguiApp {
 
 fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
     app.cat_multipliers = [1.0; 31];
-    app.cat_base_production = [1.0; 31];
     let day = date.day0() as f64;
     let mut cps = 0.0;
     for i in 0..app.upgrades.len() {
@@ -175,8 +172,6 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
     cps += app
         .cats
         .iter()
-        .zip(app.cat_base_production.iter())
-        .map(|(x, y)| x * y)
         .zip(app.cat_multipliers.iter())
         .map(|(x, y)| x * y)
         .sum::<f64>();
@@ -397,10 +392,19 @@ impl eframe::App for MyEguiApp {
                     self.currencies[1] += self.cats.iter().sum::<f64>() / 30.0 - 1.0;
                     self.cat_prices = [1.0; 31];
                     self.cats = [0.0; 31];
-                    self.upgrades = get_upgrades();
+                    for i in 0..self.upgrades.len() {
+                        println!("1: {}", self.upgrades[i].tier);
+                        if self.upgrades[i].tier < 1 {
+                            let mut t = get_upgrades();
+                            self.upgrades[i] = t.remove(i);
+                            println!("blehhhh");
+                        }
+                        println!("2: {}", self.upgrades[i].tier);
+                    }
                     self.currencies[0] = 1.0;
                     self.day_width = 0;
                     self.unlocked_tiers[1] = true;
+                    self.day_offset = 0.0;
                 }
             });
 

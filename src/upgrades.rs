@@ -11,9 +11,9 @@ pub struct Upgrade {
     pub tier: usize,
 }
 
-pub fn get_upgrades() -> Vec<Box<Upgrade>> {
+pub fn get_upgrades() -> Vec<Upgrade> {
     vec![
-        Box::new(Upgrade {
+        Upgrade {
             text: "Early Bird".to_owned(),
             description:
                 "Gives a boost to cats depending on how early in the month they are"
@@ -29,8 +29,8 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                 x.upgrades[1].price = 1500.0;
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "Late Bird".to_owned(),
             description:
                 "Gives a boost to cats depending on how late in the month they are"
@@ -46,8 +46,8 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                 x.upgrades[0].price = 1500.0;
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "Faster Spin".to_owned(),
             description: "Makes the 'Extra Effective' boost cycle through 50% faster"
                 .to_owned(),
@@ -59,8 +59,8 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                 x.day_offset += x.dt * (2_f64.powi(y as i32) - 1.0);
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "..Wider Spin?".to_owned(),
             description:
                 "Makes an additional cat get the 'Extra Effective' boost at the same time"
@@ -73,10 +73,10 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                 x.day_width = y;
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "Cat Synergy".to_owned(),
-            description: "Buying cats increases the base production of all other cats"
+            description: "Buying cats increases the multiplier of all other cats"
                 .to_owned(),
             price: 10000.0,
             price_mult: 1.0,
@@ -84,15 +84,15 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
             count: 0,
             effect: |x, _y| {
                 for i in 0..x.cat_multipliers.len() {
-                    x.cat_base_production[i] +=
+                    x.cat_multipliers[i] *=
                         x.cats.iter().enumerate().map(|(x, y)| if x == i  {
                             0.0
-                        } else{*y * 0.01}).sum::<f64>();
+                        } else{*y * 0.01}).sum::<f64>() + 1.0;
                 }
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "Like Hot Cakes".to_owned(),
             description: "Gives a temporary boost to cats when they get the 'Extra Effective' boost which falls off over time"
                 .to_owned(),
@@ -107,8 +107,8 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
                 }
             },
             tier: 0
-        }),
-        Box::new(Upgrade {
+        },
+        Upgrade {
             text: "Appetizing aroma".to_owned(),
             description: "Increases the base production of all cats based on how many strawberries you have"
                 .to_owned(),
@@ -118,10 +118,10 @@ pub fn get_upgrades() -> Vec<Box<Upgrade>> {
             count: 0,
             effect: |x, _y| {
                 for i in 0..x.cats.len() {
-                    x.cat_base_production[i] += x.currencies[1] / 100.0;
+                    x.cat_multipliers[i] *= (x.currencies[1] / 10.0) + 1.0;
                 }
             },
             tier: 1
-        }),
+        },
     ]
 }
