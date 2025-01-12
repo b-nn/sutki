@@ -23,6 +23,7 @@ pub struct MyEguiApp {
     time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
+    cat_base_production: [f64; 31],
     cat_multipliers: [f64; 31],
     day_offset: f64,
     day_width: i64,
@@ -30,56 +31,47 @@ pub struct MyEguiApp {
     cat_prices: [f64; 31],
     cat_price_multipliers: [f64; 31],
     cat_times: [f64; 31],
-    currency: f64,
+    currencies: [f64; 2],
     colors: [egui::Color32; 1],
     upgrades: Vec<Box<Upgrade>>,
-    strawberries: f64,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
-    unlocked_tiers: [bool; 1],
+    unlocked_tiers: [bool; 2],
     status: String,
     status_time: DateTime<Local>,
+    currency_symbols: [char; 2],
+    base_cat_production: [f64; 31],
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct SaveStruct {
-    dt: f64,
     cats: [f64; 31],
-    cat_multipliers: [f64; 31],
     day_offset: f64,
     day_width: i64,
     //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
     cat_prices: [f64; 31],
-    cat_price_multipliers: [f64; 31],
     cat_times: [f64; 31],
-    currency: f64,
-    colors: [egui::Color32; 1],
+    currencies: [f64; 2],
     upgrades: Vec<(String, i64, i64)>,
-    strawberries: f64,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
-    unlocked_tiers: [bool; 1],
+    unlocked_tiers: [bool; 2],
 }
 
 impl Default for SaveStruct {
     fn default() -> Self {
         Self {
-            dt: 0.0,
             cats: [0.0; 31],
-            cat_multipliers: [1.0; 31],
             cat_prices: [1.0; 31],
-            cat_price_multipliers: [1.5; 31],
             day_offset: 1.0,
             day_width: 0,
-            currency: 1.0,
+            currencies: [1.0, 0.0],
             cat_times: [0.0; 31],
-            colors: [egui::Color32::from_hex("#FF784F").unwrap()],
             upgrades: vec![],
-            strawberries: 0.0,
             cat_strawberries: [0; 31],
             cat_strawberry_prices: [1; 31],
-            unlocked_tiers: [false; 1],
+            unlocked_tiers: [true, false],
         }
     }
 }
@@ -91,20 +83,22 @@ impl Default for MyEguiApp {
             dt: 0.0,
             cats: [0.0; 31],
             cat_multipliers: [1.0; 31],
+            cat_base_production: [1.0; 31],
             cat_prices: [1.0; 31],
             cat_price_multipliers: [1.5; 31],
             day_offset: 1.0,
             day_width: 0,
-            currency: 1.0,
+            currencies: [1.0, 0.0],
             cat_times: [0.0; 31],
             colors: [egui::Color32::from_hex("#FF784F").unwrap()],
             upgrades: upgrades::get_upgrades(),
-            strawberries: 0.0,
             cat_strawberries: [0; 31],
             cat_strawberry_prices: [1; 31],
-            unlocked_tiers: [false; 1],
+            unlocked_tiers: [true, false],
             status: "Opened game".to_owned(),
             status_time: Local::now(),
+            base_cat_production: [1.0; 31],
+            currency_symbols: ['$', '🍓'],
         }
     }
 }
@@ -138,24 +132,19 @@ impl MyEguiApp {
                 final_upgrades.push(upgrade);
             }
             MyEguiApp {
-                time: Local::now(),
-                dt: t.dt,
                 cats: t.cats,
-                cat_multipliers: t.cat_multipliers,
                 day_offset: t.day_offset,
                 day_width: t.day_width,
                 cat_prices: t.cat_prices,
-                cat_price_multipliers: t.cat_price_multipliers,
                 cat_times: t.cat_times,
-                currency: t.currency,
-                colors: t.colors,
+                currencies: t.currencies,
                 upgrades: final_upgrades,
-                strawberries: t.strawberries,
                 cat_strawberries: t.cat_strawberries,
                 cat_strawberry_prices: t.cat_strawberry_prices,
                 unlocked_tiers: t.unlocked_tiers,
                 status: "Opened game".to_owned(),
                 status_time: Local::now(),
+                ..Default::default()
             }
         } else {
             Default::default()
@@ -165,6 +154,7 @@ impl MyEguiApp {
 
 fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
     app.cat_multipliers = [1.0; 31];
+    app.cat_base_production = [1.0; 31];
     let day = date.day0() as f64;
     let mut cps = 0.0;
     for i in 0..app.upgrades.len() {
@@ -185,10 +175,12 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
     cps += app
         .cats
         .iter()
+        .zip(app.cat_base_production.iter())
+        .map(|(x, y)| x * y)
         .zip(app.cat_multipliers.iter())
         .map(|(x, y)| x * y)
         .sum::<f64>();
-    app.currency += cps * app.dt;
+    app.currencies[0] += cps * app.dt;
     (cps, day)
 }
 
@@ -234,7 +226,7 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
 
             if ui
                 .add_enabled(
-                    app.cat_prices[i] <= app.currency,
+                    app.cat_prices[i] <= app.currencies[0],
                     egui::Button::new(format!("Hire another cat {:.2}$", app.cat_prices[i])),
                 )
                 .on_hover_text(format!(
@@ -243,7 +235,7 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                 ))
                 .clicked()
             {
-                app.currency -= app.cat_prices[i];
+                app.currencies[0] -= app.cat_prices[i];
                 if app.cats[i] == 0.0 {
                     for j in 0..app.cat_prices.len() {
                         if i != j && app.cats[j] == 0.0 {
@@ -255,10 +247,10 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                 app.cat_prices[i] *= app.cat_price_multipliers[i];
             }
 
-            if app.unlocked_tiers[0] {
+            if app.unlocked_tiers[1] {
                 if ui
                     .add_enabled(
-                        app.strawberries >= app.cat_strawberry_prices[i].pow(2) as f64,
+                        app.currencies[1] >= app.cat_strawberry_prices[i].pow(2) as f64,
                         egui::Button::new(format!(
                             "Feed cat {} strawberry",
                             app.cat_strawberry_prices[i].pow(2)
@@ -266,7 +258,7 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
                     )
                     .clicked()
                 {
-                    app.strawberries -= app.cat_strawberry_prices[i].pow(2) as f64;
+                    app.currencies[1] -= app.cat_strawberry_prices[i].pow(2) as f64;
                     app.cat_strawberries[i] += 1;
                     app.cat_strawberry_prices[i] += 1;
                 }
@@ -278,22 +270,17 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
 impl eframe::App for MyEguiApp {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let t = SaveStruct {
-            dt: self.dt,
             cats: self.cats,
-            cat_multipliers: self.cat_multipliers,
             day_offset: 0.0,
             day_width: self.day_width,
             cat_prices: self.cat_prices,
-            cat_price_multipliers: self.cat_price_multipliers,
             cat_times: self.cat_times,
-            currency: self.currency,
-            colors: self.colors,
+            currencies: self.currencies,
             upgrades: self
                 .upgrades
                 .iter()
                 .map(|x| (x.text.to_owned(), x.count, x.max))
                 .collect(),
-            strawberries: self.strawberries,
             cat_strawberries: self.cat_strawberries,
             cat_strawberry_prices: self.cat_strawberry_prices,
             unlocked_tiers: self.unlocked_tiers,
@@ -320,6 +307,9 @@ impl eframe::App for MyEguiApp {
                     if ui.button("Reset").clicked() {
                         *self = MyEguiApp::default();
                     }
+                    if ui.button("money (for testing purposes)").clicked() {
+                        self.currencies[0] += 10000.0;
+                    }
                 });
                 ui.add_space(16.0);
 
@@ -341,11 +331,11 @@ impl eframe::App for MyEguiApp {
             ui.heading("sutki [W.I.P. name]");
             ui.label(format!(
                 "You currently have {}$ (+{:.2}$/s)",
-                self.currency.round(),
+                self.currencies[0].round(),
                 cps
             ));
-            if self.unlocked_tiers[0] {
-                ui.label(format!("You have {} strawberries.", self.strawberries));
+            if self.unlocked_tiers[1] {
+                ui.label(format!("You have {:.2} strawberries.", self.currencies[1]));
             }
             let tomorrow_midnight = (date + Duration::days(1))
                 .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
@@ -363,13 +353,18 @@ impl eframe::App for MyEguiApp {
 
                 for i in 0..self.upgrades.len() {
                     let price = self.upgrades[i].price;
+                    if !self.unlocked_tiers[self.upgrades[i].tier] {
+                        continue;
+                    }
                     if ui
                         .add_enabled(
-                            price <= self.currency && self.upgrades[i].count < self.upgrades[i].max,
+                            price <= self.currencies[self.upgrades[i].tier]
+                                && self.upgrades[i].count < self.upgrades[i].max,
                             egui::Button::new(format!(
-                                "{} {:.2}$ [{}/{}]",
+                                "{} {:.2}{} [{}/{}]",
                                 self.upgrades[i].text,
                                 price,
+                                self.currency_symbols[self.upgrades[i].tier],
                                 self.upgrades[i].count,
                                 self.upgrades[i].max
                             )),
@@ -377,13 +372,13 @@ impl eframe::App for MyEguiApp {
                         .on_hover_text(&self.upgrades[i].description)
                         .on_disabled_hover_text(format!(
                             "[{}s, x{}] {}",
-                            ((price - self.currency) / cps).ceil(),
+                            ((price - self.currencies[self.upgrades[i].tier]) / cps).ceil(),
                             self.upgrades[i].price_mult,
                             self.upgrades[i].description
                         ))
                         .clicked()
                     {
-                        self.currency -= self.upgrades[i].price;
+                        self.currencies[self.upgrades[i].tier] -= self.upgrades[i].price;
                         self.upgrades[i].price *= self.upgrades[i].price_mult;
                         self.upgrades[i].count += 1;
                     }
@@ -399,13 +394,13 @@ impl eframe::App for MyEguiApp {
                     )
                     .clicked()
                 {
-                    self.strawberries += self.cats.iter().sum::<f64>() / 30.0 - 1.0;
+                    self.currencies[1] += self.cats.iter().sum::<f64>() / 30.0 - 1.0;
                     self.cat_prices = [1.0; 31];
                     self.cats = [0.0; 31];
                     self.upgrades = get_upgrades();
-                    self.currency = 1.0;
+                    self.currencies[0] = 1.0;
                     self.day_width = 0;
-                    self.unlocked_tiers[0] = true;
+                    self.unlocked_tiers[1] = true;
                 }
             });
 

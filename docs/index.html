@@ -11,9 +11,9 @@
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     
-<script type="module" nonce="JMDEzkj6EOxUTaL74gaPtA==">
-import init, * as bindings from 'https://b-nn.github.io/sutki/r2024-12-27-sutki.js';
-const wasm = await init({ module_or_path: 'https://b-nn.github.io/sutki/r2024-12-27-sutki_bg.wasm' });
+<script type="module" nonce="u7NNBBdYW83ud2OdGLimtQ==">
+import init, * as bindings from '/r2024-12-27-sutki.js';
+const wasm = await init({ module_or_path: '/r2024-12-27-sutki_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -23,9 +23,9 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script>
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-    <base href="https://b-nn.github.io/sutki/" />
+    <base href="/" />
 
-    <link rel="icon" href="https://b-nn.github.io/sutki/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
+    <link rel="icon" href="/favicon.ico" integrity="sha384&#x2D;jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
 
 
     
@@ -127,7 +127,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="https://b-nn.github.io/sutki/r2024-12-27-sutki.js" crossorigin=anonymous integrity="sha384-dyIAX4R/Er4JuWY4jAz99Sfwy2/mjAjTrYLAB7p3JTx6KNGsujVQW035NlZYxwgQ"><link rel="preload" href="https://b-nn.github.io/sutki/r2024-12-27-sutki_bg.wasm" crossorigin=anonymous integrity="sha384-YKTbFs8U4w2+C1VxHLtDKwzqkU8KyI8VnZ5LoKD8b9XWnnGubXsmJmIvADKlnuvS" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/r2024-12-27-sutki.js" crossorigin=anonymous integrity="sha384-dyIAX4R/Er4JuWY4jAz99Sfwy2/mjAjTrYLAB7p3JTx6KNGsujVQW035NlZYxwgQ"><link rel="preload" href="/r2024-12-27-sutki_bg.wasm" crossorigin=anonymous integrity="sha384-YKTbFs8U4w2+C1VxHLtDKwzqkU8KyI8VnZ5LoKD8b9XWnnGubXsmJmIvADKlnuvS" as="fetch" type="application/wasm"></head>
 
 <body>
     <!-- The WASM code will resize the canvas dynamically -->
