@@ -1,4 +1,5 @@
-use crate::MyEguiApp;
+use crate::Game;
+use egui::Ui;
 
 pub struct Upgrade {
     pub text: String,
@@ -7,7 +8,7 @@ pub struct Upgrade {
     pub price_mult: f64,
     pub max: i64,
     pub count: i64,
-    pub effect: fn(&mut MyEguiApp, i64),
+    pub effect: fn(&mut Game, i64),
     pub tier: usize,
 }
 
@@ -70,7 +71,7 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             max: 25,
             count: 0,
             effect: |x, y| {
-                x.day_width = y;
+                x.day_width = y as u32;
             },
             tier: 0
         },
@@ -139,4 +140,66 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             tier: 1
         },
     ]
+}
+
+pub fn update(mut app: &mut Game, ui: &mut Ui) {
+    for i in 0..app.upgrades.len() {
+        let price = app.upgrades[i].price;
+        if !app.unlocked_tiers[app.upgrades[i].tier] {
+            continue;
+        }
+        if ui
+            .add_enabled(
+                price <= app.currencies[app.upgrades[i].tier]
+                    && app.upgrades[i].count < app.upgrades[i].max,
+                egui::Button::new(format!(
+                    "{} {:.2}{} [{}/{}]",
+                    app.upgrades[i].text,
+                    price,
+                    app.currency_symbols[app.upgrades[i].tier],
+                    app.upgrades[i].count,
+                    app.upgrades[i].max
+                )),
+            )
+            .on_hover_text(&app.upgrades[i].description)
+            .on_disabled_hover_text(format!(
+                "[{}s, x{}] {}",
+                ((price - app.currencies[app.upgrades[i].tier]) / app.cps).ceil(),
+                app.upgrades[i].price_mult,
+                app.upgrades[i].description
+            ))
+            .clicked()
+        {
+            app.currencies[app.upgrades[i].tier] -= app.upgrades[i].price;
+            app.upgrades[i].price *= app.upgrades[i].price_mult;
+            app.upgrades[i].count += 1;
+        }
+    }
+
+    if ui
+        .add_enabled(
+            app.cats.iter().sum::<f64>() >= 60.0,
+            egui::Button::new(format!(
+                "Prestige for {:.2} strawberries",
+                app.cats.iter().sum::<f64>() / 30.0 - 1.0
+            )),
+        )
+        .clicked()
+    {
+        app.currencies[1] += app.cats.iter().sum::<f64>() / 30.0 - 1.0;
+        app.cat_prices = [1.0; 31];
+        app.cats = [0.0; 31];
+        for i in 0..app.upgrades.len() {
+            if app.upgrades[i].tier < 1 {
+                let mut t = get_upgrades();
+                app.upgrades[i] = t.remove(i);
+            }
+        }
+        app.currencies[0] = 1.0;
+        app.day_width = 0;
+        app.unlocked_tiers[1] = true;
+        app.day_offset = 0.0;
+        app.asleep = false;
+        app.cat_price_5_multiplier = [0.0; 31];
+    }
 }

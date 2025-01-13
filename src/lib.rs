@@ -8,24 +8,40 @@ use log::{log, Level};
 //     let _ = eframe::run_native(
 //         "My egui App",
 //         native_options,
-//         Box::new(|cc| Ok(Box::new(MyEguiApp::new(cc)))),
+//         Box::new(|cc| Ok(Box::new(Game::new(cc)))),
 //     );
 // }
 
 pub mod upgrades;
 use upgrades::{get_upgrades, Upgrade};
+pub mod cats;
 
 pub trait Update {
     fn update(&self);
 }
 
-pub struct MyEguiApp {
-    time: DateTime<Local>,
+#[derive(PartialEq)]
+enum Tab {
+    Cats,
+    Upgrades,
+    Settings,
+}
+
+const TABS: [(&str, Tab); 3] = [
+    ("Cats", Tab::Cats),
+    ("Upgrades", Tab::Upgrades),
+    ("Settings", Tab::Settings),
+];
+
+pub struct Game {
+    real_time: DateTime<Local>,
     dt: f64,
     cats: [f64; 31],
     cat_multipliers: [f64; 31],
     day_offset: f64,
-    day_width: i64,
+    day_width: u32,
+    day: u32,
+    date: DateTime<Utc>,
     //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
     cat_prices: [f64; 31],
     cat_price_multipliers: [f64; 31],
@@ -41,6 +57,8 @@ pub struct MyEguiApp {
     status_time: DateTime<Local>,
     currency_symbols: [char; 2],
     asleep: bool,
+    cps: f64,
+    state: Tab,
 }
 
 fn change_status(level: Level, message: &str, status: &mut String, time: &mut DateTime<Local>) {
@@ -54,7 +72,7 @@ fn change_status(level: Level, message: &str, status: &mut String, time: &mut Da
 pub struct SaveStruct {
     cats: [f64; 31],
     day_offset: f64,
-    day_width: i64,
+    day_width: u32,
     //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
     cat_prices: [f64; 31],
     cat_times: [f64; 31],
@@ -84,10 +102,10 @@ impl Default for SaveStruct {
     }
 }
 
-impl Default for MyEguiApp {
+impl Default for Game {
     fn default() -> Self {
         Self {
-            time: Local::now(),
+            real_time: Local::now(),
             dt: 0.0,
             cats: [0.0; 31],
             cat_multipliers: [1.0; 31],
@@ -95,6 +113,7 @@ impl Default for MyEguiApp {
             cat_price_multipliers: [1.5; 31],
             day_offset: 1.0,
             day_width: 0,
+            day: Local::now().day0(),
             currencies: [1.0, 0.0],
             cat_times: [0.0; 31],
             colors: [egui::Color32::from_hex("#FF784F").unwrap()],
@@ -107,11 +126,14 @@ impl Default for MyEguiApp {
             currency_symbols: ['$', '🍓'],
             cat_price_5_multiplier: [0.0; 31],
             asleep: false,
+            cps: 0.0,
+            date: Utc::now(),
+            state: Tab::Cats,
         }
     }
 }
 
-impl MyEguiApp {
+impl Game {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
         // Restore app state using cc.storage (requires the "persistence" feature).
@@ -139,7 +161,7 @@ impl MyEguiApp {
                 }
                 final_upgrades.push(upgrade);
             }
-            MyEguiApp {
+            Game {
                 cats: t.cats,
                 day_offset: t.day_offset,
                 day_width: t.day_width,
@@ -161,10 +183,9 @@ impl MyEguiApp {
     }
 }
 
-fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
+fn update(app: &mut Game) -> f64 {
     app.cat_multipliers = [1.0; 31];
     app.cat_prices = [1.0; 31];
-    let day = date.day0() as f64;
     let mut cps = 0.0;
     for i in 0..app.upgrades.len() {
         if app.upgrades[i].count > 0 {
@@ -177,7 +198,7 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
         } else {
             1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
         };
-        if within_day_range(day, app.day_width as f64, i as f64) && !app.asleep {
+        if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
             app.cat_multipliers[i] *= 1.5;
             app.cat_times[i] += app.dt;
         } else {
@@ -193,18 +214,18 @@ fn update(app: &mut MyEguiApp, date: DateTime<Utc>) -> (f64, f64) {
         .map(|(x, y)| x * y)
         .sum::<f64>();
     app.currencies[0] += cps * app.dt;
-    (cps, day)
+    cps
 }
 
-fn within_day_range(day: f64, width: f64, i: f64) -> bool {
-    if day + width < 31.0 {
+fn within_day_range(day: u32, width: u32, i: u32) -> bool {
+    if day + width < 31 {
         if i >= day && i <= day + width {
             true
         } else {
             false
         }
     } else {
-        if i >= day || i <= (day + width).rem_euclid(31.0) {
+        if i >= day || i <= (day + width).rem_euclid(31) {
             true
         } else {
             false
@@ -212,11 +233,11 @@ fn within_day_range(day: f64, width: f64, i: f64) -> bool {
     }
 }
 
-fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
+fn cat_handler(app: &mut Game, ui: &mut egui::Ui) {
     let mut count = 0;
     for i in 0..app.cats.len() {
         ui.horizontal(|ui| {
-            if within_day_range(day, app.day_width as f64, i as f64) && !app.asleep {
+            if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
                 count += 1;
                 ui.label(
                     RichText::new(format!(
@@ -279,7 +300,7 @@ fn cat_handler(app: &mut MyEguiApp, ui: &mut egui::Ui, day: f64) {
     }
 }
 
-impl eframe::App for MyEguiApp {
+impl eframe::App for Game {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         let t = SaveStruct {
             cats: self.cats,
@@ -321,7 +342,7 @@ impl eframe::App for MyEguiApp {
                         }
                     }
                     if ui.button("Reset").clicked() {
-                        *self = MyEguiApp::default();
+                        *self = Game::default();
                     }
                     if ui.button("money (for testing purposes)").clicked() {
                         self.currencies[0] += 10000.0;
@@ -330,6 +351,13 @@ impl eframe::App for MyEguiApp {
                 ui.add_space(16.0);
 
                 egui::widgets::global_theme_preference_buttons(ui);
+
+                ui.add_space(16.0);
+                for i in TABS {
+                    if ui.selectable_label(i.1 == self.state, i.0).clicked() {
+                        self.state = i.1;
+                    }
+                }
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(format!(
@@ -341,117 +369,22 @@ impl eframe::App for MyEguiApp {
             });
         });
 
-        let date = Utc::now() + Duration::seconds(self.day_offset as i64);
-        let (cps, day) = update(self, date);
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("sutki [W.I.P. name]");
-            ui.label(format!(
-                "You currently have {}$ (+{:.2}$/s)",
-                self.currencies[0].round(),
-                cps
-            ));
-            if self.unlocked_tiers[1] {
-                ui.label(format!("You have {:.2} strawberries.", self.currencies[1]));
+        self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
+        self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
+        self.cps = update(self);
+        let central = egui::CentralPanel::default();
+        central.show(ctx, |ui| match self.state {
+            Tab::Cats => {
+                cats::update(self, ui);
             }
-            let tomorrow_midnight = (date + Duration::days(1))
-                .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-                .unwrap();
-
-            ui.label(format!(
-                "{:.2} seconds until tomorrow.",
-                (tomorrow_midnight - date).num_seconds() as f64
-                    / 2_f64.powi(self.upgrades[2].count as i32),
-            ));
-
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.set_min_width(330.0);
-
-                cat_handler(self, ui, day);
-
-                for i in 0..self.upgrades.len() {
-                    let price = self.upgrades[i].price;
-                    if !self.unlocked_tiers[self.upgrades[i].tier] {
-                        continue;
-                    }
-                    if ui
-                        .add_enabled(
-                            price <= self.currencies[self.upgrades[i].tier]
-                                && self.upgrades[i].count < self.upgrades[i].max,
-                            egui::Button::new(format!(
-                                "{} {:.2}{} [{}/{}]",
-                                self.upgrades[i].text,
-                                price,
-                                self.currency_symbols[self.upgrades[i].tier],
-                                self.upgrades[i].count,
-                                self.upgrades[i].max
-                            )),
-                        )
-                        .on_hover_text(&self.upgrades[i].description)
-                        .on_disabled_hover_text(format!(
-                            "[{}s, x{}] {}",
-                            ((price - self.currencies[self.upgrades[i].tier]) / cps).ceil(),
-                            self.upgrades[i].price_mult,
-                            self.upgrades[i].description
-                        ))
-                        .clicked()
-                    {
-                        self.currencies[self.upgrades[i].tier] -= self.upgrades[i].price;
-                        self.upgrades[i].price *= self.upgrades[i].price_mult;
-                        self.upgrades[i].count += 1;
-                    }
-                }
-
-                if ui
-                    .add_enabled(
-                        self.cats.iter().sum::<f64>() >= 60.0,
-                        egui::Button::new(format!(
-                            "Prestige for {:.2} strawberries",
-                            self.cats.iter().sum::<f64>() / 30.0 - 1.0
-                        )),
-                    )
-                    .clicked()
-                {
-                    self.currencies[1] += self.cats.iter().sum::<f64>() / 30.0 - 1.0;
-                    self.cat_prices = [1.0; 31];
-                    self.cats = [0.0; 31];
-                    for i in 0..self.upgrades.len() {
-                        if self.upgrades[i].tier < 1 {
-                            let mut t = get_upgrades();
-                            self.upgrades[i] = t.remove(i);
-                        }
-                    }
-                    self.currencies[0] = 1.0;
-                    self.day_width = 0;
-                    self.unlocked_tiers[1] = true;
-                    self.day_offset = 0.0;
-                    self.asleep = false;
-                    self.cat_price_5_multiplier = [0.0; 31];
-                }
-            });
-
-            // ui.hyperlink("https://github.com/emilk/egui");
-            // ui.text_edit_singleline(&mut self.label);
-            // if ui.button("Click me").clicked() {}
-            // ui.add(egui::Slider::new(&mut self.fps, 0.0..=240.0).prefix("Desired FPS: "));
-            // ui.label(format!("Current FPS: {}", (1.0 / self.dt).round()));
-            // ui.label(format!("count: {}", self.count));
-
-            // ui.checkbox(&mut false, "Checkbox");
-
-            // ui.horizontal(|ui| {
-            //     ui.radio_value(&mut self.num, Enum::First, "First");
-            //     ui.radio_value(&mut self.num, Enum::Second, "Second");
-            //     ui.radio_value(&mut self.num, Enum::Third, "Third");
-            // });
-
-            // ui.separator();
-
-            // ui.collapsing("Click to see what is hidden!", |ui| {
-            //     ui.label("Not much, as it turns out");
-            // });
+            Tab::Upgrades => upgrades::update(self, ui),
+            Tab::Settings => {}
         });
-        self.dt = (Local::now() - self.time).num_microseconds().unwrap() as f64 * 1e-6;
-        self.time = Local::now();
+
+        // cats::update(self, ctx, central);
+
+        self.dt = (Local::now() - self.real_time).num_microseconds().unwrap() as f64 * 1e-6;
+        self.real_time = Local::now();
         ctx.request_repaint();
     }
 }
