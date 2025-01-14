@@ -1,11 +1,9 @@
-use crate::get_upgrades;
 use crate::within_day_range;
 use crate::Game;
 use chrono::{self, Duration, NaiveTime};
 use egui::{RichText, Ui};
 
-pub fn update(mut app: &mut Game, ui: &mut Ui) {
-    ui.heading("sutki [W.I.P. name]");
+pub fn update(app: &mut Game, ui: &mut Ui) {
     ui.label(format!(
         "You currently have {}$ (+{:.2}$/s)",
         app.currencies[0].round(),

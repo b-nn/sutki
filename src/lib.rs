@@ -1,6 +1,6 @@
-use chrono::{self, DateTime, Datelike, Duration, Local, NaiveTime, Utc};
+use chrono::{self, DateTime, Datelike, Duration, Local, Utc};
 use eframe::egui;
-use egui::{debug_text::print, RichText};
+use egui::FontDefinitions;
 use log::{log, Level};
 
 // fn main() {
@@ -12,26 +12,30 @@ use log::{log, Level};
 //     );
 // }
 
-pub mod upgrades;
+mod upgrades;
 use upgrades::{get_upgrades, Upgrade};
-pub mod cats;
+mod cats;
+mod prestige;
+mod settings;
 
 pub trait Update {
     fn update(&self);
 }
 
 #[derive(PartialEq)]
-enum Tab {
+pub enum Tab {
     Cats,
     Upgrades,
     Settings,
 }
 
-const TABS: [(&str, Tab); 3] = [
+pub const TABS: [(&str, Tab); 3] = [
     ("Cats", Tab::Cats),
     ("Upgrades", Tab::Upgrades),
     ("Settings", Tab::Settings),
 ];
+
+pub const MODULES: [&str; 4] = ["Cats", "Upgrades", "Settings", "Prestige"];
 
 pub struct Game {
     real_time: DateTime<Local>,
@@ -59,6 +63,7 @@ pub struct Game {
     asleep: bool,
     cps: f64,
     state: Tab,
+    modules: [[bool; MODULES.len()]; TABS.len()],
 }
 
 fn change_status(level: Level, message: &str, status: &mut String, time: &mut DateTime<Local>) {
@@ -82,6 +87,7 @@ pub struct SaveStruct {
     cat_strawberry_prices: [i64; 31],
     unlocked_tiers: [bool; 2],
     cat_price_5_multiplier: [f64; 31],
+    modules: [[bool; MODULES.len()]; TABS.len()],
 }
 
 impl Default for SaveStruct {
@@ -98,6 +104,11 @@ impl Default for SaveStruct {
             cat_strawberry_prices: [1; 31],
             unlocked_tiers: [true, false],
             cat_price_5_multiplier: [0.0; 31],
+            modules: [
+                [true, false, false, true],
+                [false, true, false, true],
+                [false, false, true, false],
+            ],
         }
     }
 }
@@ -129,6 +140,11 @@ impl Default for Game {
             cps: 0.0,
             date: Utc::now(),
             state: Tab::Cats,
+            modules: [
+                [true, false, false, true],
+                [false, true, false, true],
+                [false, false, true, false],
+            ],
         }
     }
 }
@@ -139,6 +155,24 @@ impl Game {
         // Restore app state using cc.storage (requires the "persistence" feature).
         // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
         // for e.g. egui::PaintCallback.
+
+        let mut fonts = FontDefinitions::default();
+        fonts.font_data.insert(
+            "Jetbrains".to_owned(),
+            std::sync::Arc::new(
+                // .ttf and .otf supported
+                egui::FontData::from_static(include_bytes!(
+                    "../assets/JetBrainsMono-VariableFont_wght.ttf"
+                )),
+            ),
+        );
+        fonts
+            .families
+            .get_mut(&egui::FontFamily::Proportional)
+            .unwrap()
+            .insert(0, "Jetbrains".to_owned());
+
+        cc.egui_ctx.set_fonts(fonts);
 
         if let Some(storage) = cc.storage {
             let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
@@ -175,6 +209,7 @@ impl Game {
                 status: "Opened game".to_owned(),
                 status_time: Local::now(),
                 cat_price_5_multiplier: t.cat_price_5_multiplier,
+                modules: t.modules,
                 ..Default::default()
             }
         } else {
@@ -183,7 +218,7 @@ impl Game {
     }
 }
 
-fn update(app: &mut Game) -> f64 {
+fn update(app: &mut Game) {
     app.cat_multipliers = [1.0; 31];
     app.cat_prices = [1.0; 31];
     let mut cps = 0.0;
@@ -214,7 +249,7 @@ fn update(app: &mut Game) -> f64 {
         .map(|(x, y)| x * y)
         .sum::<f64>();
     app.currencies[0] += cps * app.dt;
-    cps
+    app.cps = cps;
 }
 
 fn within_day_range(day: u32, width: u32, i: u32) -> bool {
@@ -233,70 +268,18 @@ fn within_day_range(day: u32, width: u32, i: u32) -> bool {
     }
 }
 
-fn cat_handler(app: &mut Game, ui: &mut egui::Ui) {
-    let mut count = 0;
-    for i in 0..app.cats.len() {
-        ui.horizontal(|ui| {
-            if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
-                count += 1;
-                ui.label(
-                    RichText::new(format!(
-                        "You have {} 'Day {}' cats [{:.2}]",
-                        app.cats[i],
-                        i + 1,
-                        app.cat_multipliers[i]
-                    ))
-                    .color(app.colors[0]),
-                )
-                .on_hover_text("This cat is Extra Effective!");
-            } else {
-                ui.label(format!(
-                    "You have {} 'Day {}' cats [{:.2}]",
-                    app.cats[i],
-                    i + 1,
-                    app.cat_multipliers[i]
-                ));
-            }
-
-            if ui
-                .add_enabled(
-                    app.cat_prices[i] <= app.currencies[0],
-                    egui::Button::new(format!("Hire another cat {:.2}$", app.cat_prices[i])),
-                )
-                .on_hover_text(format!(
-                    "x{} to self, x5 to all other unbought cats",
-                    app.cat_price_multipliers[i],
-                ))
-                .clicked()
-            {
-                app.currencies[0] -= app.cat_prices[i];
-                if app.cats[i] == 0.0 {
-                    for j in 0..app.cat_prices.len() {
-                        if i != j && app.cats[j] == 0.0 {
-                            app.cat_price_5_multiplier[j] += 1.0;
-                        }
-                    }
-                }
-                app.cats[i] += 1.0;
-            }
-
-            if app.unlocked_tiers[1] {
-                if ui
-                    .add_enabled(
-                        app.currencies[1] >= app.cat_strawberry_prices[i].pow(2) as f64,
-                        egui::Button::new(format!(
-                            "Feed cat {} strawberry",
-                            app.cat_strawberry_prices[i].pow(2)
-                        )),
-                    )
-                    .clicked()
-                {
-                    app.currencies[1] -= app.cat_strawberry_prices[i].pow(2) as f64;
-                    app.cat_strawberries[i] += 1;
-                    app.cat_strawberry_prices[i] += 1;
-                }
-            }
-        });
+fn render(list: [bool; 4], app: &mut Game, ui: &mut egui::Ui) {
+    if list[0] {
+        cats::update(app, ui);
+    }
+    if list[1] {
+        upgrades::update(app, ui);
+    }
+    if list[2] {
+        settings::update(app, ui);
+    }
+    if list[3] {
+        prestige::update(app, ui);
     }
 }
 
@@ -318,6 +301,7 @@ impl eframe::App for Game {
             cat_strawberry_prices: self.cat_strawberry_prices,
             unlocked_tiers: self.unlocked_tiers,
             cat_price_5_multiplier: self.cat_price_5_multiplier,
+            modules: self.modules,
         };
         eframe::set_value(storage, eframe::APP_KEY, &t);
         change_status(
@@ -371,17 +355,16 @@ impl eframe::App for Game {
 
         self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
-        self.cps = update(self);
+        update(self);
+
+        println!("updated!");
+
         let central = egui::CentralPanel::default();
         central.show(ctx, |ui| match self.state {
-            Tab::Cats => {
-                cats::update(self, ui);
-            }
-            Tab::Upgrades => upgrades::update(self, ui),
-            Tab::Settings => {}
+            Tab::Cats => render(self.modules[0], self, ui),
+            Tab::Upgrades => render(self.modules[1], self, ui),
+            Tab::Settings => render(self.modules[2], self, ui),
         });
-
-        // cats::update(self, ctx, central);
 
         self.dt = (Local::now() - self.real_time).num_microseconds().unwrap() as f64 * 1e-6;
         self.real_time = Local::now();
