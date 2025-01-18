@@ -1,6 +1,7 @@
 use crate::Game;
 use egui::Ui;
 
+#[derive(Debug)]
 pub struct Upgrade {
     pub text: String,
     pub description: String,
@@ -106,7 +107,7 @@ pub fn get_upgrades() -> Vec<Upgrade> {
                 if x.asleep { return; }
                 for i in 0..x.cat_multipliers.len() {
                     if x.cat_times[i] < 0.0 || x.asleep { continue; }
-                    x.cat_multipliers[i] *= 1.2f64.powf(5.0 - x.cat_times[i]) + 1.0;
+                    x.cat_multipliers[i] *= 1.2f64.powf(5.0 - (x.cat_times[i] / (x.challenges[1].count + 1) as f64)) + 1.0;
                 }
             },
             tier: 0
@@ -152,7 +153,6 @@ pub fn get_upgrades() -> Vec<Upgrade> {
                 for i in 0..x.cat_multipliers.len() {
                     x.cat_multipliers[i] *= 1.1_f64.powi(y as i32);
                 }
-                x.upgrades[0].price = 1500.0;
             },
             tier: 1
         },

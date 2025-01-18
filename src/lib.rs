@@ -268,7 +268,6 @@ fn update(app: &mut Game) {
         }
     }
     for i in 0..app.challenges.len() {
-        // println!("{:?}", app.challenges[i]);
         if app.challenges[i].count > 0 {
             (app.challenges[i].boost)(app, app.challenges[i].count);
         }

@@ -1,4 +1,5 @@
 use crate::get_upgrades;
+use crate::within_day_range;
 use crate::Game;
 use egui::Ui;
 use log::log;
@@ -39,7 +40,7 @@ impl Default for Challenge {
 pub fn get_challenges() -> Vec<Challenge> {
     vec![Challenge {
         id: 0,
-        description: "Disables the 'Extra Effective!' boost in challenge. \nGives the cat which was most recently boosted an additional boost.".to_owned(),
+        description: "Disables the 'Extra Effective!' boost in challenge. \nBoost: Gives the cat which was most recently boosted an additional boost.".to_owned(),
         count: 0,
         max: 1,
         goal: 75000.0,
@@ -51,6 +52,11 @@ pub fn get_challenges() -> Vec<Challenge> {
             for i in 0..app.upgrades.len() {
                 if app.upgrades[i].count > 0 {
                     (app.upgrades[i].effect)(app, app.upgrades[i].count);
+                }
+            }
+            for i in 0..app.challenges.len() {
+                if app.challenges[i].count > 0 {
+                    (app.challenges[i].boost)(app, app.challenges[i].count);
                 }
             }
 
@@ -78,10 +84,59 @@ pub fn get_challenges() -> Vec<Challenge> {
                     3_f64.powi(y as i32);
             }
             x.challenges[0].goal = (x.challenges[0].count + 1) as f64 * 75000.0;
-            println!("boost is being applied! {}", 3_f64.powi(y as i32));
 
         },
-    }]
+    },
+    Challenge {
+            id: 1,
+            description: "Makes the 'Extra Effective!' divide instead of multiply, \ndisables sleeping, and automatically maxes out both Spin upgrades. Challenge 0's boost is disabled. \nBoost: Makes Like Hot Cakes' effect fall off slower.".to_owned(),
+            count: 0,
+            max: 1,
+            goal: 5000.0,
+            currency: 0,
+            effect: |app, _y| {
+                app.cat_multipliers = [1.0; 31];
+                app.cat_prices = [1.0; 31];
+                let mut cps = 0.0;
+                for i in 0..app.upgrades.len() {
+                    if app.upgrades[i].count > 0 && i != 5 {
+                        (app.upgrades[i].effect)(app, app.upgrades[i].count);
+                    }
+                }
+                app.asleep = false;
+                for i in 0..app.challenges.len() {
+                    if app.challenges[i].count > 0 && i != 0 {
+                        (app.challenges[i].boost)(app, app.challenges[i].count);
+                    }
+                }
+                app.upgrades[2].count = app.upgrades[2].max;
+                app.upgrades[3].count = app.upgrades[3].max;
+
+                for i in 0..app.cats.len() {
+                    app.cat_prices[i] = 1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32);
+                    app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
+                    if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
+                        app.cat_multipliers[i] /= 1.5;
+                        app.cat_times[i] += app.dt;
+                    } else {
+                        app.cat_times[i] = -0.00001;
+                    }
+                    if app.cat_times[i] < 0.0 { continue; }
+                    app.cat_multipliers[i] /= 1.2f64.powf(5.0 - app.cat_times[i]) + 1.0;
+                }
+
+                cps += app
+                    .cats
+                    .iter()
+                    .zip(app.cat_multipliers.iter())
+                    .map(|(x, y)| x * y)
+                    .sum::<f64>();
+                app.currencies[0] += cps * app.dt;
+                app.cps = cps;
+            },
+            boost: |_x, _y| {
+            },
+        }]
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
@@ -109,7 +164,6 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
         app.in_challenge = false;
         app.current_challenge = Challenge::default();
-        println!("oop!");
     }
 
     for i in 0..app.challenges.len() {
