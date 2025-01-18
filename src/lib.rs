@@ -15,6 +15,8 @@ use log::{log, Level};
 mod upgrades;
 use upgrades::{get_upgrades, Upgrade};
 mod cats;
+mod challenges;
+use challenges::{get_challenges, Challenge};
 mod prestige;
 mod settings;
 
@@ -27,15 +29,17 @@ pub enum Tab {
     Cats,
     Upgrades,
     Settings,
+    Challenges,
 }
 
-pub const TABS: [(&str, Tab); 3] = [
+pub const TABS: [(&str, Tab); 4] = [
     ("Cats", Tab::Cats),
     ("Upgrades", Tab::Upgrades),
     ("Settings", Tab::Settings),
+    ("Challenges", Tab::Challenges),
 ];
 
-pub const MODULES: [&str; 4] = ["Cats", "Upgrades", "Settings", "Prestige"];
+pub const MODULES: [&str; 5] = ["Cats", "Upgrades", "Settings", "Prestige", "Challenges"];
 
 pub struct Game {
     real_time: DateTime<Local>,
@@ -64,6 +68,9 @@ pub struct Game {
     cps: f64,
     state: Tab,
     modules: [[bool; MODULES.len()]; TABS.len()],
+    in_challenge: bool,
+    current_challenge: Challenge,
+    challenges: Vec<Challenge>,
 }
 
 fn change_status(level: Level, message: &str, status: &mut String, time: &mut DateTime<Local>) {
@@ -88,6 +95,9 @@ pub struct SaveStruct {
     unlocked_tiers: [bool; 2],
     cat_price_5_multiplier: [f64; 31],
     modules: [[bool; MODULES.len()]; TABS.len()],
+    challenges: Vec<(String, i64, i64)>,
+    current_challenge: usize,
+    in_challenge: bool,
 }
 
 impl Default for SaveStruct {
@@ -105,10 +115,14 @@ impl Default for SaveStruct {
             unlocked_tiers: [true, false],
             cat_price_5_multiplier: [0.0; 31],
             modules: [
-                [true, false, false, true],
-                [false, true, false, true],
-                [false, false, true, false],
+                [true, false, false, true, false],
+                [false, true, false, true, false],
+                [false, false, true, false, false],
+                [false, false, false, false, true],
             ],
+            challenges: vec![],
+            current_challenge: 1000000,
+            in_challenge: false,
         }
     }
 }
@@ -141,10 +155,14 @@ impl Default for Game {
             date: Utc::now(),
             state: Tab::Cats,
             modules: [
-                [true, false, false, true],
-                [false, true, false, true],
-                [false, false, true, false],
+                [true, false, false, true, false],
+                [false, true, false, true, false],
+                [false, false, true, false, false],
+                [false, false, false, false, true],
             ],
+            in_challenge: false,
+            current_challenge: Challenge::default(),
+            challenges: get_challenges(),
         }
     }
 }
@@ -178,23 +196,38 @@ impl Game {
             let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
 
             let default_upgrades = get_upgrades();
+            let default_challenges = get_challenges();
 
             let mut final_upgrades = vec![];
-            for i in default_upgrades {
-                let mut upgrade = i;
+            for mut i in default_upgrades {
                 for j in &t.upgrades {
-                    if &j.0 != &upgrade.text {
+                    if &j.0 != &i.text {
                         continue;
                     }
-                    if &j.2 != &upgrade.max {
+                    if &j.2 != &i.max {
                         continue;
                     }
-                    upgrade.count = j.1;
-                    upgrade.price = upgrade.price * upgrade.price_mult.powi(j.1 as i32);
+                    i.count = j.1;
+                    i.price = i.price * i.price_mult.powi(j.1 as i32);
                     break;
                 }
-                final_upgrades.push(upgrade);
+                final_upgrades.push(i);
             }
+            let mut final_challenges = vec![];
+            for mut i in default_challenges {
+                for j in &t.challenges {
+                    if &j.0 != &i.description {
+                        continue;
+                    }
+                    if &j.1 != &i.max {
+                        continue;
+                    }
+                    i.count = j.2;
+                    break;
+                }
+                final_challenges.push(i);
+            }
+
             Game {
                 cats: t.cats,
                 day_offset: t.day_offset,
@@ -210,6 +243,13 @@ impl Game {
                 status_time: Local::now(),
                 cat_price_5_multiplier: t.cat_price_5_multiplier,
                 modules: t.modules,
+                challenges: final_challenges,
+                current_challenge: if t.current_challenge == 1000000 {
+                    Challenge::default()
+                } else {
+                    get_challenges()[t.current_challenge].clone()
+                },
+                in_challenge: t.in_challenge,
                 ..Default::default()
             }
         } else {
@@ -227,6 +267,13 @@ fn update(app: &mut Game) {
             (app.upgrades[i].effect)(app, app.upgrades[i].count);
         }
     }
+    for i in 0..app.challenges.len() {
+        // println!("{:?}", app.challenges[i]);
+        if app.challenges[i].count > 0 {
+            (app.challenges[i].boost)(app, app.challenges[i].count);
+        }
+    }
+
     for i in 0..app.cats.len() {
         app.cat_prices[i] = if app.asleep {
             1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
@@ -268,7 +315,7 @@ fn within_day_range(day: u32, width: u32, i: u32) -> bool {
     }
 }
 
-fn render(list: [bool; 4], app: &mut Game, ui: &mut egui::Ui) {
+fn render(list: [bool; 5], app: &mut Game, ui: &mut egui::Ui) {
     if list[0] {
         cats::update(app, ui);
     }
@@ -280,6 +327,9 @@ fn render(list: [bool; 4], app: &mut Game, ui: &mut egui::Ui) {
     }
     if list[3] {
         prestige::update(app, ui);
+    }
+    if list[4] {
+        challenges::update(app, ui);
     }
 }
 
@@ -302,6 +352,13 @@ impl eframe::App for Game {
             unlocked_tiers: self.unlocked_tiers,
             cat_price_5_multiplier: self.cat_price_5_multiplier,
             modules: self.modules,
+            challenges: self
+                .challenges
+                .iter()
+                .map(|x| (x.description.to_owned(), x.count, x.max))
+                .collect(),
+            current_challenge: self.current_challenge.id,
+            in_challenge: self.in_challenge,
         };
         eframe::set_value(storage, eframe::APP_KEY, &t);
         change_status(
@@ -355,15 +412,21 @@ impl eframe::App for Game {
 
         self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
-        update(self);
 
-        println!("updated!");
+        if !self.in_challenge {
+            update(self);
+        } else {
+            (self.current_challenge.effect)(self, self.current_challenge.count);
+        }
 
         let central = egui::CentralPanel::default();
-        central.show(ctx, |ui| match self.state {
-            Tab::Cats => render(self.modules[0], self, ui),
-            Tab::Upgrades => render(self.modules[1], self, ui),
-            Tab::Settings => render(self.modules[2], self, ui),
+        central.show(ctx, |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| match self.state {
+                Tab::Cats => render(self.modules[0], self, ui),
+                Tab::Upgrades => render(self.modules[1], self, ui),
+                Tab::Settings => render(self.modules[2], self, ui),
+                Tab::Challenges => render(self.modules[3], self, ui),
+            })
         });
 
         self.dt = (Local::now() - self.real_time).num_microseconds().unwrap() as f64 * 1e-6;

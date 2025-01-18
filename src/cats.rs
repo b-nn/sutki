@@ -30,7 +30,10 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         let mut count = 0;
         for i in 0..app.cats.len() {
             ui.horizontal(|ui| {
-                if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
+                if within_day_range(app.day, app.day_width, i as u32)
+                    && !app.asleep
+                    && app.current_challenge.id != 0
+                {
                     count += 1;
                     ui.label(
                         RichText::new(format!(

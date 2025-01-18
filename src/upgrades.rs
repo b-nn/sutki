@@ -139,6 +139,23 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             },
             tier: 1
         },
+        Upgrade {
+            text: "Basic Bird".to_owned(),
+            description:
+                "Gives a flat boost to all cats"
+                    .to_owned(),
+            price: 2.0,
+            price_mult: 2.0,
+            max: 30,
+            count: 0,
+            effect: |x, y| {
+                for i in 0..x.cat_multipliers.len() {
+                    x.cat_multipliers[i] *= 1.1_f64.powi(y as i32);
+                }
+                x.upgrades[0].price = 1500.0;
+            },
+            tier: 1
+        },
     ]
 }
 
