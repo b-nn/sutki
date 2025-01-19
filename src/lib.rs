@@ -3,15 +3,6 @@ use eframe::egui;
 use egui::FontDefinitions;
 use log::{log, Level};
 
-// fn main() {
-//     let native_options = eframe::NativeOptions::default();
-//     let _ = eframe::run_native(
-//         "My egui App",
-//         native_options,
-//         Box::new(|cc| Ok(Box::new(Game::new(cc)))),
-//     );
-// }
-
 mod upgrades;
 use upgrades::{get_upgrades, Upgrade};
 mod cats;
@@ -20,8 +11,8 @@ use challenges::{get_challenges, Challenge};
 mod prestige;
 mod settings;
 
-pub trait Update {
-    fn update(&self);
+pub trait Module {
+    fn update(&self, app: &mut Game, ui: &mut egui::Ui);
 }
 
 #[derive(PartialEq)]
@@ -314,9 +305,9 @@ fn within_day_range(day: u32, width: u32, i: u32) -> bool {
     }
 }
 
-fn render(list: [bool; 5], app: &mut Game, ui: &mut egui::Ui) {
+fn render(list: [bool; 5], app: &mut Game, ui: &mut egui::Ui, ctx: &egui::Context) {
     if list[0] {
-        cats::update(app, ui);
+        cats::update(app, ui, ctx);
     }
     if list[1] {
         upgrades::update(app, ui);
@@ -368,12 +359,9 @@ impl eframe::App for Game {
         );
     }
 
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-
             egui::menu::bar(ui, |ui| {
-                // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
                 ui.menu_button("File", |ui| {
                     if !is_web {
@@ -389,10 +377,9 @@ impl eframe::App for Game {
                     }
                 });
                 ui.add_space(16.0);
-
                 egui::widgets::global_theme_preference_buttons(ui);
-
                 ui.add_space(16.0);
+
                 for i in TABS {
                     if ui.selectable_label(i.1 == self.state, i.0).clicked() {
                         self.state = i.1;
@@ -409,6 +396,8 @@ impl eframe::App for Game {
             });
         });
 
+        println!("{:?}", ctx.input(|i| i.screen_rect()));
+
         self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
 
@@ -421,10 +410,10 @@ impl eframe::App for Game {
         let central = egui::CentralPanel::default();
         central.show(ctx, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| match self.state {
-                Tab::Cats => render(self.modules[0], self, ui),
-                Tab::Upgrades => render(self.modules[1], self, ui),
-                Tab::Settings => render(self.modules[2], self, ui),
-                Tab::Challenges => render(self.modules[3], self, ui),
+                Tab::Cats => render(self.modules[0], self, ui, ctx),
+                Tab::Upgrades => render(self.modules[1], self, ui, ctx),
+                Tab::Settings => render(self.modules[2], self, ui, ctx),
+                Tab::Challenges => render(self.modules[3], self, ui, ctx),
             })
         });
 

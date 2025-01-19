@@ -22,6 +22,8 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             if index != TABS.len() {ui.separator();};
         }
     });
+
+
     // let t = egui::Grid::new("settings_id");
     // let t = t.spacing(Vec2::new(30.0, 0.0));
     // t.show(ui, |ui| {
