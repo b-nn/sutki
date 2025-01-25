@@ -143,16 +143,31 @@ pub fn get_upgrades() -> Vec<Upgrade> {
         Upgrade {
             text: "Basic Bird".to_owned(),
             description:
-                "Gives a flat boost to all cats"
+                "Gives a flat 1.1x boost to all cats"
                     .to_owned(),
             price: 2.0,
             price_mult: 2.0,
             max: 30,
             count: 0,
             effect: |x, y| {
+                let t = (x.upgrades[9].count as f64 / 20.0) + 1.1;
                 for i in 0..x.cat_multipliers.len() {
-                    x.cat_multipliers[i] *= 1.1_f64.powi(y as i32);
+                    x.cat_multipliers[i] *= t.powi(y as i32);
                 }
+                x.upgrades[8].description = format!("Gives a flat {:.2}x boost to all cats", t).to_owned();
+            },
+            tier: 1
+        },
+        Upgrade {
+            text: "Big Bird".to_owned(),
+            description:
+                "Makes Basic Bird more effective"
+                    .to_owned(),
+            price: 2.0,
+            price_mult: 2.0,
+            max: 18,
+            count: 0,
+            effect: |_x, _y| {
             },
             tier: 1
         },

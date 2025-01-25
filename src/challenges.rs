@@ -1,3 +1,4 @@
+use crate::change_status;
 use crate::get_upgrades;
 use crate::within_day_range;
 use crate::Game;
@@ -27,11 +28,11 @@ impl Default for Challenge {
             max: 0,
             effect: |_x, _y| loop {
                 log!(log::Level::Error, "Something has gone very wrong, you are never meant to run this, please file a bug report!");
-                println!("something has gone very wrong, you are never meant to run this, please report this bug!");
+                println!("something has gone very wrong, you are never meant to run this, please file a bug report!");
             },
             boost: |_x, _y| loop {
                 log!(log::Level::Error, "Something has gone very wrong, you are never meant to run this, please file a bug report!");
-                println!("something has gone very wrong, you are never meant to run this");
+                println!("something has gone very wrong, you are never meant to run this, please file a bug report!");
             },
         }
     }
@@ -136,7 +137,71 @@ pub fn get_challenges() -> Vec<Challenge> {
             },
             boost: |_x, _y| {
             },
-        }]
+        },
+    Challenge {
+            id: 2,
+            description: "Money exponentially slows down production.\nBoost: Money logarithmically multiplies strawberry production.".to_owned(),
+            count: 0,
+            max: 1,
+            goal: 61000.0,
+            currency: 0,
+            effect: |app, _y| {
+                app.cat_multipliers = [1.0; 31];
+                app.cat_prices = [1.0; 31];
+                let mut cps = 0.0;
+                for i in 0..app.upgrades.len() {
+                    if app.upgrades[i].count > 0 {
+                        (app.upgrades[i].effect)(app, app.upgrades[i].count);
+                    }
+                }
+                for i in 0..app.challenges.len() {
+                    if app.challenges[i].count > 0 {
+                        (app.challenges[i].boost)(app, app.challenges[i].count);
+                    }
+                }
+
+                for i in 0..app.cats.len() {
+                    app.cat_prices[i] = if app.asleep {
+                        1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    } else {
+                        1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    };
+                    if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
+                        app.cat_multipliers[i] *= 1.5;
+                        app.cat_times[i] += app.dt;
+                    } else {
+                        app.cat_times[i] = -0.00001;
+                    }
+                    app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
+                }
+
+                cps += app
+                    .cats
+                    .iter()
+                    .zip(app.cat_multipliers.iter())
+                    .map(|(x, y)| x * y)
+                    .sum::<f64>();
+                cps /= 1.0001_f64.powf(app.currencies[0]);
+                app.currencies[0] += cps * app.dt;
+                app.cps = cps;
+            },
+            boost: |_x, _y| {
+            },
+        },
+    Challenge {
+            id: 3,
+            description: "Buying a cat multiplies its output by 0.9x\nBoost: Every 10th cat purchase gives a 1.1x boost to itself.".to_owned(),
+            count: 0,
+            max: 1,
+            goal: 9999999.0,
+            currency: 0,
+            effect: |app, _y| {
+                change_status(log::Level::Info, "This challenge is not implemented yet!", &mut app.status, &mut app.status_time);
+            },
+            boost: |_x, _y| {
+            },
+        }
+    ]
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
