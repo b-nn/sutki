@@ -75,7 +75,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                     "{} 'Day {}' cats\n[{}]",
                                     app.cats[i],
                                     i + 1,
-                                    format(app.money_gain_per_cat[i])
+                                    format(app.cat_multipliers[i])
                                 ))
                                 .color(app.colors[0]),
                             )
@@ -85,7 +85,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                 "{} 'Day {}' cats\n[{}]",
                                 app.cats[i],
                                 i + 1,
-                                format(app.money_gain_per_cat[i])
+                                format(app.cat_multipliers[i])
                             ))
                         }
                         .rect
