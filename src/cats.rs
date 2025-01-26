@@ -140,6 +140,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                                 app.cat_strawberry_prices[i].pow(2)
                                             )),
                                         )
+                                        .on_hover_text("Gives a 1.5x boost to this cat")
                                     },
                                 )
                                 .inner

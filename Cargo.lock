@@ -2829,6 +2829,7 @@ dependencies = [
 name = "r2024-12-27-sutki"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "eframe",
  "egui",
@@ -2836,6 +2837,7 @@ dependencies = [
  "env_logger",
  "image",
  "log",
+ "ron",
  "serde",
  "wasm-bindgen-futures",
  "web-sys",

@@ -74,7 +74,9 @@ pub struct Game {
     automation_interval: f64,
     automation_enabled: bool,
     automation_mode: automation::AutomationMode,
+    automation_delay: f64,
     money_gain_per_cat: [f64; 31],
+    automation_unlocked: bool,
 }
 
 fn change_status(
@@ -184,7 +186,100 @@ impl Default for Game {
             automation_interval: 0.1,
             automation_enabled: false,
             money_gain_per_cat: [0.0; 31],
+            automation_delay: 0.0,
+            automation_unlocked: false,
         }
+    }
+}
+
+pub fn save_game(t: &mut Game) -> SaveStruct {
+    SaveStruct {
+        cats: t.cats,
+        day_offset: 0.0,
+        day_width: t.day_width,
+        cat_prices: t.cat_prices,
+        cat_times: t.cat_times,
+        currencies: t.currencies,
+        upgrades: t
+            .upgrades
+            .iter()
+            .map(|x| (x.text.to_owned(), x.count, x.max))
+            .collect(),
+        cat_strawberries: t.cat_strawberries,
+        cat_strawberry_prices: t.cat_strawberry_prices,
+        unlocked_tiers: t.unlocked_tiers,
+        cat_price_5_multiplier: t.cat_price_5_multiplier,
+        modules: t.modules,
+        challenges: t
+            .challenges
+            .iter()
+            .map(|x| (x.description.to_owned(), x.count, x.max))
+            .collect(),
+        current_challenge: t.current_challenge.id,
+        in_challenge: t.in_challenge,
+        automation_interval: t.automation_interval,
+        automation_enabled: t.automation_enabled,
+        automation_mode: t.automation_mode.clone(),
+    }
+}
+
+pub fn load_game(t: SaveStruct) -> Game {
+    let default_upgrades = get_upgrades();
+    let default_challenges = get_challenges();
+
+    let mut final_upgrades = vec![];
+    for mut i in default_upgrades {
+        for j in &t.upgrades {
+            if &j.0 != &i.text {
+                continue;
+            }
+            if &j.2 != &i.max {
+                continue;
+            }
+            i.count = j.1;
+            i.price = i.price * i.price_mult.powi(j.1 as i32);
+            break;
+        }
+        final_upgrades.push(i);
+    }
+    let mut final_challenges = vec![];
+    for mut i in default_challenges {
+        for j in &t.challenges {
+            if &j.0 != &i.description {
+                continue;
+            }
+            if &j.1 != &i.max {
+                continue;
+            }
+            i.count = j.2;
+            break;
+        }
+        final_challenges.push(i);
+    }
+
+    Game {
+        cats: t.cats,
+        day_offset: t.day_offset,
+        day_width: t.day_width,
+        cat_prices: t.cat_prices,
+        cat_times: t.cat_times,
+        currencies: t.currencies,
+        upgrades: final_upgrades,
+        cat_strawberries: t.cat_strawberries,
+        cat_strawberry_prices: t.cat_strawberry_prices,
+        unlocked_tiers: t.unlocked_tiers,
+        status: "Opened game".to_owned(),
+        status_time: Local::now(),
+        cat_price_5_multiplier: t.cat_price_5_multiplier,
+        modules: t.modules,
+        challenges: final_challenges,
+        current_challenge: if t.current_challenge == 1000000 {
+            Challenge::default()
+        } else {
+            get_challenges()[t.current_challenge].clone()
+        },
+        in_challenge: t.in_challenge,
+        ..Default::default()
     }
 }
 
@@ -215,64 +310,7 @@ impl Game {
 
         if let Some(storage) = cc.storage {
             let t: SaveStruct = eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-
-            let default_upgrades = get_upgrades();
-            let default_challenges = get_challenges();
-
-            let mut final_upgrades = vec![];
-            for mut i in default_upgrades {
-                for j in &t.upgrades {
-                    if &j.0 != &i.text {
-                        continue;
-                    }
-                    if &j.2 != &i.max {
-                        continue;
-                    }
-                    i.count = j.1;
-                    i.price = i.price * i.price_mult.powi(j.1 as i32);
-                    break;
-                }
-                final_upgrades.push(i);
-            }
-            let mut final_challenges = vec![];
-            for mut i in default_challenges {
-                for j in &t.challenges {
-                    if &j.0 != &i.description {
-                        continue;
-                    }
-                    if &j.1 != &i.max {
-                        continue;
-                    }
-                    i.count = j.2;
-                    break;
-                }
-                final_challenges.push(i);
-            }
-
-            Game {
-                cats: t.cats,
-                day_offset: t.day_offset,
-                day_width: t.day_width,
-                cat_prices: t.cat_prices,
-                cat_times: t.cat_times,
-                currencies: t.currencies,
-                upgrades: final_upgrades,
-                cat_strawberries: t.cat_strawberries,
-                cat_strawberry_prices: t.cat_strawberry_prices,
-                unlocked_tiers: t.unlocked_tiers,
-                status: "Opened game".to_owned(),
-                status_time: Local::now(),
-                cat_price_5_multiplier: t.cat_price_5_multiplier,
-                modules: t.modules,
-                challenges: final_challenges,
-                current_challenge: if t.current_challenge == 1000000 {
-                    Challenge::default()
-                } else {
-                    get_challenges()[t.current_challenge].clone()
-                },
-                in_challenge: t.in_challenge,
-                ..Default::default()
-            }
+            load_game(t)
         } else {
             Default::default()
         }
@@ -303,7 +341,6 @@ fn update_base(app: &mut Game, cats: [f64; 31]) -> f64 {
         .zip(app.cat_multipliers.iter())
         .map(|(x, y)| x * y)
         .sum::<f64>();
-    println!("base {}", cps);
     cps
 }
 
@@ -345,7 +382,6 @@ fn update(app: &mut Game) {
         .sum::<f64>();
     app.currencies[0] += cps * app.dt;
     app.cps = cps;
-    println!("{}", cps);
 }
 
 fn within_day_range(day: u32, width: u32, i: u32) -> bool {
@@ -387,34 +423,8 @@ fn render(list: [bool; 6], app: &mut Game, ui: &mut egui::Ui, ctx: &egui::Contex
 
 impl eframe::App for Game {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        let t = SaveStruct {
-            cats: self.cats,
-            day_offset: 0.0,
-            day_width: self.day_width,
-            cat_prices: self.cat_prices,
-            cat_times: self.cat_times,
-            currencies: self.currencies,
-            upgrades: self
-                .upgrades
-                .iter()
-                .map(|x| (x.text.to_owned(), x.count, x.max))
-                .collect(),
-            cat_strawberries: self.cat_strawberries,
-            cat_strawberry_prices: self.cat_strawberry_prices,
-            unlocked_tiers: self.unlocked_tiers,
-            cat_price_5_multiplier: self.cat_price_5_multiplier,
-            modules: self.modules,
-            challenges: self
-                .challenges
-                .iter()
-                .map(|x| (x.description.to_owned(), x.count, x.max))
-                .collect(),
-            current_challenge: self.current_challenge.id,
-            in_challenge: self.in_challenge,
-            automation_interval: self.automation_interval,
-            automation_enabled: self.automation_enabled,
-            automation_mode: self.automation_mode.clone(),
-        };
+        let t = save_game(self);
+
         eframe::set_value(storage, eframe::APP_KEY, &t);
         change_status(
             Level::Info,
@@ -440,6 +450,9 @@ impl eframe::App for Game {
                     if ui.button("money (for testing purposes)").clicked() {
                         self.currencies[0] += 10000.0;
                     }
+                    if ui.button("strawberries (for testing purposes)").clicked() {
+                        self.currencies[1] += 100.0;
+                    }
                 });
                 ui.add_space(16.0);
                 egui::widgets::global_theme_preference_buttons(ui);
@@ -464,76 +477,12 @@ impl eframe::App for Game {
         self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
 
-        // let base = update_base(self, self.cats);
-        // for i in 0..self.money_gain_per_cat.len() {
-        //     self.money_gain_per_cat[i] = update_base(
-        //         self,
-        //         self.cats
-        //             .iter()
-        //             .enumerate()
-        //             .map(|(x, y)| y + if x == i { 1.0 } else { 0.0 })
-        //             .collect::<Vec<f64>>()
-        //             .try_into()
-        //             .unwrap(),
-        //     ) - base;
-        // }
-
-        // if self.automation_enabled {
-        //     let mut index = 0;
-        //     match self.automation_mode {
-        //         automation::AutomationMode::MostMoney => {
-        //             let percent = self
-        //                 .money_gain_per_cat
-        //                 .iter()
-        //                 .enumerate()
-        //                 .map(|(i, x)| x / self.cat_prices[i])
-        //                 .collect::<Vec<_>>();
-        //             let mut max = 0.0;
-        //             for i in 0..percent.len() {
-        //                 if (percent[i] / self.cat_prices[i]) > max {
-        //                     max = percent[i] / self.cat_prices[i];
-        //                     index = i;
-        //                 }
-        //             }
-        //         }
-        //         automation::AutomationMode::MostStrawberries => {
-        //             let base = (self.cats.iter().sum::<f64>() / 30.0 - 1.0)
-        //                 * if self.challenges[2].count != 0 {
-        //                     if self.currencies[0].log10() < 1.0 {
-        //                         1.5
-        //                     } else {
-        //                         1.5_f64.powf(self.currencies[0].log10())
-        //                     }
-        //                 } else {
-        //                     1.0
-        //                 };
-        //             let percent = self
-        //                 .money_gain_per_cat
-        //                 .iter()
-        //                 .enumerate()
-        //                 .map(|(i, x)| x / self.cat_prices[i])
-        //                 .collect::<Vec<_>>();
-        //             let mut max = 0.0;
-        //             for i in 0..percent.len() {
-        //                 if (percent[i] / self.cat_prices[i]) > max {
-        //                     max = percent[i] / self.cat_prices[i];
-        //                     index = i;
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     if !(self.currencies[0] < self.cat_prices[index]) {
-        //         self.currencies[0] -= self.cat_prices[index];
-        //         if self.cats[index] == 0.0 {
-        //             for j in 0..self.cat_prices.len() {
-        //                 if index != j && self.cats[j] == 0.0 {
-        //                     self.cat_price_5_multiplier[j] += 1.0;
-        //                 }
-        //             }
-        //         }
-        //         self.cats[index] += 1.0;
-        //     }
-        // }
+        if self.automation_enabled {
+            if self.automation_delay > self.automation_interval {
+                self.automation_delay = 0.0;
+                automation::buy_best_cat(self);
+            }
+        }
 
         if !self.in_challenge {
             update(self);
@@ -556,6 +505,7 @@ impl eframe::App for Game {
 
         self.dt = (Local::now() - self.real_time).num_microseconds().unwrap() as f64 * 1e-6;
         self.real_time = Local::now();
+        self.automation_delay += self.dt;
         ctx.request_repaint();
     }
 }

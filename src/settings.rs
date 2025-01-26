@@ -1,4 +1,7 @@
+use crate::change_status;
+use crate::load_game;
 use crate::TABS;
+use crate::SaveStruct;
 use crate::Game;
 use crate::MODULES;
 use egui::Ui;
@@ -22,6 +25,61 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             if index != TABS.len() {ui.separator();};
         }
     });
+
+    if ui.button("Export save to clipboard").clicked() {
+        let t = SaveStruct {
+            cats: app.cats,
+            day_offset: 0.0,
+            day_width: app.day_width,
+            cat_prices: app.cat_prices,
+            cat_times: app.cat_times,
+            currencies: app.currencies,
+            upgrades: app
+                .upgrades
+                .iter()
+                .map(|x| (x.text.to_owned(), x.count, x.max))
+                .collect(),
+            cat_strawberries: app.cat_strawberries,
+            cat_strawberry_prices: app.cat_strawberry_prices,
+            unlocked_tiers: app.unlocked_tiers,
+            cat_price_5_multiplier: app.cat_price_5_multiplier,
+            modules: app.modules,
+            challenges: app
+                .challenges
+                .iter()
+                .map(|x| (x.description.to_owned(), x.count, x.max))
+                .collect(),
+            current_challenge: app.current_challenge.id,
+            in_challenge: app.in_challenge,
+            automation_interval: app.automation_interval,
+            automation_enabled: app.automation_enabled,
+            automation_mode: app.automation_mode.clone(),
+        };
+
+        match ron::to_string(&t) {
+            Ok(text) => {
+                ui.output_mut(|x| x.copied_text = text);
+            }
+            Err(t) => {
+                change_status(log::Level::Error, "Failed to export save, copied error to clipboard.", &mut app.status, &mut app.status_time);
+                ui.output_mut(|x| x.copied_text = format!("Error while exporting save: {}", t));
+            }
+        }
+    }
+
+    if ui.button("Import save from clipboard").clicked() {
+        ui.output_mut(|save| {
+            match ron::from_str::<SaveStruct>(&save.copied_text) {
+                Ok(t) => {
+                    *app = load_game(t);
+                }
+                Err(t) => {
+                    change_status(log::Level::Error, "Failed to import save, copied error to clipboard.", &mut app.status, &mut app.status_time);
+                    save.copied_text = format!("Error while importing save: {}", t);
+                }
+            };
+        });
+    }
 
 
     // let t = egui::Grid::new("settings_id");

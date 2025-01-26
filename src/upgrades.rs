@@ -171,6 +171,33 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             },
             tier: 1
         },
+        Upgrade {
+            text: "Automation".to_owned(),
+            description:
+                "Unlocks Automation"
+                    .to_owned(),
+            price: 100.0,
+            price_mult: 1.0,
+            max: 1,
+            count: 0,
+            effect: |x, _y| {
+                x.automation_unlocked = true;
+            },
+            tier: 1
+        },
+        Upgrade {
+            text: "Faster Automation".to_owned(),
+            description:
+                "Increases the maximum speed of automation."
+                    .to_owned(),
+            price: 100.0,
+            price_mult: 1.4,
+            max: 10,
+            count: 0,
+            effect: |_x, _y| {
+            },
+            tier: 1
+        },
     ]
 }
 
