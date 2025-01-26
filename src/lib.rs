@@ -464,76 +464,76 @@ impl eframe::App for Game {
         self.date = Utc::now() + Duration::seconds(self.day_offset as i64);
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
 
-        let base = update_base(self, self.cats);
-        for i in 0..self.money_gain_per_cat.len() {
-            self.money_gain_per_cat[i] = update_base(
-                self,
-                self.cats
-                    .iter()
-                    .enumerate()
-                    .map(|(x, y)| y + if x == i { 1.0 } else { 0.0 })
-                    .collect::<Vec<f64>>()
-                    .try_into()
-                    .unwrap(),
-            ) - base;
-        }
+        // let base = update_base(self, self.cats);
+        // for i in 0..self.money_gain_per_cat.len() {
+        //     self.money_gain_per_cat[i] = update_base(
+        //         self,
+        //         self.cats
+        //             .iter()
+        //             .enumerate()
+        //             .map(|(x, y)| y + if x == i { 1.0 } else { 0.0 })
+        //             .collect::<Vec<f64>>()
+        //             .try_into()
+        //             .unwrap(),
+        //     ) - base;
+        // }
 
-        if self.automation_enabled {
-            let mut index = 0;
-            match self.automation_mode {
-                automation::AutomationMode::MostMoney => {
-                    let percent = self
-                        .money_gain_per_cat
-                        .iter()
-                        .enumerate()
-                        .map(|(i, x)| x / self.cat_prices[i])
-                        .collect::<Vec<_>>();
-                    let mut max = 0.0;
-                    for i in 0..percent.len() {
-                        if (percent[i] / self.cat_prices[i]) > max {
-                            max = percent[i] / self.cat_prices[i];
-                            index = i;
-                        }
-                    }
-                }
-                automation::AutomationMode::MostStrawberries => {
-                    let base = (self.cats.iter().sum::<f64>() / 30.0 - 1.0)
-                        * if self.challenges[2].count != 0 {
-                            if self.currencies[0].log10() < 1.0 {
-                                1.5
-                            } else {
-                                1.5_f64.powf(self.currencies[0].log10())
-                            }
-                        } else {
-                            1.0
-                        };
-                    let percent = self
-                        .money_gain_per_cat
-                        .iter()
-                        .enumerate()
-                        .map(|(i, x)| x / self.cat_prices[i])
-                        .collect::<Vec<_>>();
-                    let mut max = 0.0;
-                    for i in 0..percent.len() {
-                        if (percent[i] / self.cat_prices[i]) > max {
-                            max = percent[i] / self.cat_prices[i];
-                            index = i;
-                        }
-                    }
-                }
-            }
-            if !(self.currencies[0] < self.cat_prices[index]) {
-                self.currencies[0] -= self.cat_prices[index];
-                if self.cats[index] == 0.0 {
-                    for j in 0..self.cat_prices.len() {
-                        if index != j && self.cats[j] == 0.0 {
-                            self.cat_price_5_multiplier[j] += 1.0;
-                        }
-                    }
-                }
-                self.cats[index] += 1.0;
-            }
-        }
+        // if self.automation_enabled {
+        //     let mut index = 0;
+        //     match self.automation_mode {
+        //         automation::AutomationMode::MostMoney => {
+        //             let percent = self
+        //                 .money_gain_per_cat
+        //                 .iter()
+        //                 .enumerate()
+        //                 .map(|(i, x)| x / self.cat_prices[i])
+        //                 .collect::<Vec<_>>();
+        //             let mut max = 0.0;
+        //             for i in 0..percent.len() {
+        //                 if (percent[i] / self.cat_prices[i]) > max {
+        //                     max = percent[i] / self.cat_prices[i];
+        //                     index = i;
+        //                 }
+        //             }
+        //         }
+        //         automation::AutomationMode::MostStrawberries => {
+        //             let base = (self.cats.iter().sum::<f64>() / 30.0 - 1.0)
+        //                 * if self.challenges[2].count != 0 {
+        //                     if self.currencies[0].log10() < 1.0 {
+        //                         1.5
+        //                     } else {
+        //                         1.5_f64.powf(self.currencies[0].log10())
+        //                     }
+        //                 } else {
+        //                     1.0
+        //                 };
+        //             let percent = self
+        //                 .money_gain_per_cat
+        //                 .iter()
+        //                 .enumerate()
+        //                 .map(|(i, x)| x / self.cat_prices[i])
+        //                 .collect::<Vec<_>>();
+        //             let mut max = 0.0;
+        //             for i in 0..percent.len() {
+        //                 if (percent[i] / self.cat_prices[i]) > max {
+        //                     max = percent[i] / self.cat_prices[i];
+        //                     index = i;
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     if !(self.currencies[0] < self.cat_prices[index]) {
+        //         self.currencies[0] -= self.cat_prices[index];
+        //         if self.cats[index] == 0.0 {
+        //             for j in 0..self.cat_prices.len() {
+        //                 if index != j && self.cats[j] == 0.0 {
+        //                     self.cat_price_5_multiplier[j] += 1.0;
+        //                 }
+        //             }
+        //         }
+        //         self.cats[index] += 1.0;
+        //     }
+        // }
 
         if !self.in_challenge {
             update(self);
