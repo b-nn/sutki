@@ -67,19 +67,24 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
     }
 
-    if ui.button("Import save from clipboard").clicked() {
-        ui.output_mut(|save| {
-            match ron::from_str::<SaveStruct>(&save.copied_text) {
-                Ok(t) => {
-                    *app = load_game(t);
-                }
-                Err(t) => {
-                    change_status(log::Level::Error, "Failed to import save, copied error to clipboard.", &mut app.status, &mut app.status_time);
-                    save.copied_text = format!("Error while importing save: {}", t);
-                }
-            };
-        });
+    if ui.button("Import save from text field").clicked() {
+        if app.settings_text_field.is_empty() {
+            app.settings_text_field = "Please put in your save file!".to_string();
+        }
+        match ron::from_str::<SaveStruct>(&app.settings_text_field) {
+            Ok(t) => {
+                *app = load_game(t);
+            }
+            Err(t) => {
+                change_status(log::Level::Error, "Failed to import save, copied error to clipboard.", &mut app.status, &mut app.status_time);
+                ui.output_mut(|text| {
+                    text.copied_text = format!("Error while importing save: {}", t);
+                });
+            }
+        };
     }
+
+    ui.add(egui::TextEdit::singleline(&mut app.settings_text_field));
 
 
     // let t = egui::Grid::new("settings_id");

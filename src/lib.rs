@@ -77,6 +77,7 @@ pub struct Game {
     automation_delay: f64,
     money_gain_per_cat: [f64; 31],
     automation_unlocked: bool,
+    settings_text_field: String,
 }
 
 fn change_status(
@@ -188,6 +189,7 @@ impl Default for Game {
             money_gain_per_cat: [0.0; 31],
             automation_delay: 0.0,
             automation_unlocked: false,
+            settings_text_field: String::new(),
         }
     }
 }
