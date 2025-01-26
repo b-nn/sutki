@@ -1,4 +1,4 @@
-use chrono::{self, DateTime, Datelike, Duration, Local, Utc};
+use chrono::{self, DateTime, Datelike, Duration, Local, Timelike, Utc};
 use eframe::egui;
 use egui::FontDefinitions;
 use log::{log, Level};
@@ -78,6 +78,9 @@ pub struct Game {
     money_gain_per_cat: [f64; 31],
     automation_unlocked: bool,
     settings_text_field: String,
+    titles: Vec<String>,
+    title_delay: f64,
+    title_index: usize,
 }
 
 fn change_status(
@@ -190,6 +193,22 @@ impl Default for Game {
             automation_delay: 0.0,
             automation_unlocked: false,
             settings_text_field: String::new(),
+            titles: vec![
+                "wow! moving title!!!               ".to_owned(),
+                r#""remember kids, it's only homicide if you kill a member of your own species""#
+                    .to_owned(),
+                "But then I had a very good idea, I used F64".to_owned(),
+                "c++ is a very valid reason to cry".to_owned(),
+                r#"And god said "Let there be cabbits!""#.to_owned(),
+                ":3".to_owned(),
+                ">:3".to_owned(),
+                r#"":3" MY ASS, GET OUT OF MY HOUSE!!!"#.to_owned(),
+                "not like the other catgirls".to_owned(),
+                "hor".to_owned(),
+                "Now dogassium free!".to_owned(),
+            ],
+            title_delay: 0.0,
+            title_index: (Utc::now().second() % 11) as usize, // should always be titles.count
         }
     }
 }
@@ -437,6 +456,27 @@ impl eframe::App for Game {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let mut t = "sutki // ".to_owned();
+        t.push_str(match self.title_index {
+            0 => {
+                if self.title_delay > 0.1 {
+                    let mut b: Vec<char> = self.titles[0].chars().collect();
+                    b.rotate_left(1);
+                    self.titles[0] = b.iter().collect();
+                    self.title_delay -= 0.1;
+                }
+                &self.titles[self.title_index][15..]
+            }
+            9 => {
+                if self.real_time.timestamp_micros() % 15 == 0 {
+                    "hor"
+                } else {
+                    ""
+                }
+            }
+            _ => &self.titles[self.title_index],
+        });
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(t));
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
@@ -508,6 +548,7 @@ impl eframe::App for Game {
         self.dt = (Local::now() - self.real_time).num_microseconds().unwrap() as f64 * 1e-6;
         self.real_time = Local::now();
         self.automation_delay += self.dt;
+        self.title_delay += self.dt;
         ctx.request_repaint();
     }
 }
