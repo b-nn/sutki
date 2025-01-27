@@ -21,7 +21,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         .add_enabled(
             app.cats.iter().sum::<f64>() >= 60.0,
             egui::Button::new(format!("Prestige for {:.2} strawberries", strawberries)),
-        )
+        ).on_hover_text("Gives strawberries based off how many cats you have".to_owned())
         .clicked()
     {
         app.currencies[1] += strawberries;
