@@ -28,9 +28,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
     });
 
-
     let mut notations = HashMap::new();
-
     notations.insert(Enum::Scientific,"Scientific")    
     notations.insert(Enum::Standard, "Standard")    
     notations.insert(Enum::Engineering, "Engineering")    
@@ -38,7 +36,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
     notations.insert(Enum::Binary, "Binary")    
     notations.insert(Enum::Hex, "Hex")    
     notations.insert(Enum::Logarithm, "Logarithm")    
-    notations.insert(Enum::Emoji, "🇪🇲🇴🇯🇮")    
+    notations.insert(Enum::Emoji, "🇪🇲​🇴🇯🇮")    
     notations.insert(Enum::Blind, "")    
     notations.insert(Enum::Morse, "-- --- .-. ... .")    
     notations.insert(Enum::Leaf, "Leaf") 
@@ -100,32 +98,6 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         ui.add(egui::DragValue::new(&mut app.zoom).speed(0.001));
         app.zoom = app.zoom.clamp(0.4, 2.0);
     });
-
-    let mut notations = HashMap::new();
-
-    notations.insert(Enum::Scientific,"Scientific")    
-    notations.insert(Enum::Standard, "Standard")    
-    notations.insert(Enum::Engineering, "Engineering")    
-    notations.insert(Enum::None, "None") 
-    notations.insert(Enum::Binary, "Binary")    
-    notations.insert(Enum::Hex, "Hex")    
-    notations.insert(Enum::Logarithm, "Logarithm")    
-    notations.insert(Enum::Emoji, "🇪🇲🇴🇯🇮")    
-    notations.insert(Enum::Blind, "")    
-    notations.insert(Enum::Morse, "-- --- .-. ... .")    
-    notations.insert(Enum::Leaf, "Leaf") 
-    notations.insert(Enum::Reverse, "Reverse") 
-    notations.insert(Enum::Celeste, "Celeste") 
-    notations.insert(Enum::Heart, "Heart") 
-
-    egui::ComboBox::from_label("Select Notation")
-    .selected_text(format!("{:?}", selected))
-    .show_ui(ui, |ui| {
-        for (key, value) in notations.into_iter() {
-            ui.selectable_value(&mut selected, key, value);
-        }
-    );
-    
 
     // let t = egui::Grid::new("settings_id");
     // let t = t.spacing(Vec2::new(30.0, 0.0));
