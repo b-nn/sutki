@@ -26,6 +26,36 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
     });
 
+    use std::collections::HashMap; //where tf do i put this
+
+    let mut notations = HashMap::new();
+
+    notations.insert(Enum::Scientific,"Scientific")    
+    notations.insert(Enum::Standard, "Standard")    
+    notations.insert(Enum::Engineering, "Engineering")    
+    notations.insert(Enum::None, "None") 
+    notations.insert(Enum::Binary, "Binary")    
+    notations.insert(Enum::Hex, "Hex")    
+    notations.insert(Enum::Logarithm, "Logarithm")    
+    notations.insert(Enum::Emoji, "🇪🇲🇴🇯🇮")    
+    notations.insert(Enum::Blind, "")    
+    notations.insert(Enum::Morse, "-- --- .-. ... .")    
+    notations.insert(Enum::Leaf, "Leaf") 
+    notations.insert(Enum::Reverse, "Reverse") 
+    notations.insert(Enum::Celeste, "Celeste") 
+    notations.insert(Enum::Heart, "Heart") 
+
+
+
+    egui::ComboBox::from_label("Select Notation")
+    .selected_text(format!("{:?}", selected))
+    .show_ui(ui, |ui| {
+        for (key, value) in notations.into_iter() {
+            ui.selectable_value(&mut selected, key, value);
+        }
+    );
+
+
     if ui.button("Export save to clipboard").clicked() {
         let t = SaveStruct {
             cats: app.cats,
