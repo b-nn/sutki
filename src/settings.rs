@@ -45,7 +45,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
     notations.insert(Enum::Reverse, "Reverse") 
     notations.insert(Enum::Celeste, "Celeste") 
     notations.insert(Enum::Heart, "Heart") 
-
+    
     egui::ComboBox::from_label("Select Notation")
     .selected_text(format!("{:?}", selected))
     .show_ui(ui, |ui| {
