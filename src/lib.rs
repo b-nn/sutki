@@ -200,7 +200,7 @@ impl Default for Game {
                 "wow! moving title!!!               ".to_owned(),
                 r#""remember kids, it's only homicide if you kill a member of your own species""#
                     .to_owned(),
-                "But then I had a very good idea, I used F64".to_owned(),
+                "But then I had a very good idea, I used F5".to_owned(),
                 "c++ is a very valid reason to cry".to_owned(),
                 r#"And god said "Let there be cabbits!""#.to_owned(),
                 ":3".to_owned(),
@@ -209,9 +209,29 @@ impl Default for Game {
                 "not like the other catgirls".to_owned(),
                 "hor".to_owned(),
                 "Now dogassium free!".to_owned(),
+                "so THAT just happened".to_owned(),
+                "it's a pile of balls".to_owned(),
+                "gaslight gatekeep girlboss".to_owned(),
+                "i should never come into offtopic ever again i guess".to_owned(),
+                "seinfield".to_owned(),
+                "Also try- actually no don't".to_owned(),
+                "heh.".to_owned(),
+                "hop on yoinkz".to_owned(),
+                "iktus".to_owned(),
+                "sutki // sutki // sutki // sutki // sutki // sutki // sutki // sutki".to_owned(),
+                "clidle edition".to_owned(),
+                "clordle edition".to_owned(),
+                "meow btw. if you even care.".to_owned(),
+                "This game contains an undisclosed ad for the gaming site galaxy.click".to_owned(),
+                "I like rubbing my belly".to_owned(),
+                r#""hey did you know that-" yes john, everyone knows"#.to_owned(),
+                "this is the 28th title".to_owned(),
+                "Your lips look dry. And don't even try licking them.".to_owned(),
+                "this is the 82nd title".to_owned(),
+                "titlebar".to_owned(),
             ],
             title_delay: 0.0,
-            title_index: (Utc::now().second() % 11) as usize, // should always be titles.count
+            title_index: (Utc::now().second() % 31) as usize, // should always be titles.count
             zoom: 1.0,
         }
     }
@@ -499,6 +519,8 @@ impl eframe::App for Game {
             }
             _ => &self.titles[self.title_index],
         });
+
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(t));
 
         // change title here
 
