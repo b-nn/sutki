@@ -15,11 +15,190 @@ pub struct Cats {
 }
 
 fn format(input: f64) -> String {
-    if input > 100000.0 {
-        format!("{:.2e}", input)
-    } else {
-        format!("{:.2}", input)
+    beepboop = Enum::Scientific //read value later idfk how to do this
+    match beepboop{
+        // for (key,value) in notations.into_iter() {
+        //     Enum::key => value()
+        // } //this wont work, ever
+        Enum::Scientific=>Scientific(input),
+        Enum::Standard=>Standard(input),
+        Enum::Engineering=>Engineering(input),
+        Enum::None=>None(input),
+        Enum::Binary=>Binary(input),
+        Enum::Hex=>Hex(input),
+        Enum::Logarithm=>Logarithm(input),
+        Enum::Emoji=>Emoji(input),
+        Enum::Blind=>Blind(input),
+        Enum::Morse=>Morse(input),
+        Enum::Zalgo=>Zalgo(input),
+        Enum::Leaf=>Leaf(input),
+        Enum::Reverse=>Reverse(input),
+        Enum::Celeste=>Celeste(input),
+        Enum::Heart=>Heart(input),
+        _=>println!("how did you fuck up THIS badly") Scientific(input),
     }
+
+fn Scientific(num) {
+    format!("{:.2e}", input)
+}
+
+fn Standard(num) {
+    let abbreviation1 = ['','K','M','B','T','Qd','Qn','Sx','Sp','Oc','No'] // only used once, use abbreviations 2 and 3 for everything above 1 No
+    let abbreviation2 = ['','U','D','T','Qa','Qn','Sx','Sp','Oc','No']
+    let abbreviation3 = ['','De','Vg','Tg','Qd','Qn','Se','Sg','Og','Ng','Ce','Dn','Tc','Qe','Qu','Sc','Si','Oe','Ne']
+    let numwithoutdecimal = format!("{:.0}",num)
+    let numbertodisplay = ""
+
+    let j = 0
+    for i in numwithoutdecimal.to_string().chars() {
+        if j >= 2  {
+            return
+        }
+        numbertodisplay.insert(i)
+        j = j + 1
+    } // oh for fucks sake give me substr like a normal programming language
+
+    if (numwithoutdecimal.to_string().chars() <= 3) { // below 1K, dont abbreviate at all
+        format!("{:?}",numbertodisplay)
+    }
+
+    let indexofabbreviation: f32 = ((numwithoutdecimal.to_string().chars().count()) / 3).floor() // how many triplets of zeroes are in it
+    let abtwotouse = indexofabbreviation % 11 // 
+
+    if indexofabbreviation < 11 { // below 1 Dc, use abbreviations 1
+        format!("{:?}",numbertodisplay + abbreviation1[indexofabbreviation])
+    } else {
+        amountofabthree = indexofabbreviation/11
+        format!("{:?}", numbertodisplay + abbreviation2[indexofabbreviation % 11 + 1] + abbrevation3[(indexofabbreviation/11).floor()])
+    }
+
+}
+
+fn Engineering(num) {
+    let exp = ((num.abs().log10() / 3.0).round() * 3.0; as i64).clamp(-f64::MAX_10_EXP, f64::MAX_10_EXP);
+    let sig = num * (10_f64).powi(-exp);
+    format!("{:?}","{sig}*10^{exp}")
+}
+
+fn None(num) {
+    format!("{:?}",input)
+}
+fn Binary(num) {
+    format!("{x:b}",input)
+}
+fn Hex(num) {
+    format!("{y:x}",input)
+}
+fn Logarithm(num) {
+    format!("e{:?}",num.log10())
+}
+fn Emoji(num) {
+    let emojicodes = Hashmap.new()
+    emojicodes.insert("1","🐦‍🔥")
+    emojicodes.insert("2","🍓")
+    emojicodes.insert("3","🔱")
+    emojicodes.insert("4","💅")
+    emojicodes.insert("5","🏳️‍⚧️")
+    emojicodes.insert("6","🎲")
+    emojicodes.insert("7","🎰")
+    emojicodes.insert("8","🎡")
+    emojicodes.insert("9","🫨")
+    emojicodes.insert("0","🕸️")
+    let mut emojistring = ""
+    for i in num.to_string().chars() {
+        emojistring.insert(emojicodes[i])
+    }}
+    format!("{:?}",emojistring)
+}
+fn Blind(num) {
+    format!("{:?}","")
+}
+fn Morse(num) {
+    let morsecodes = Hashmap.new()
+    morsecodes.insert("1",".----")
+    morsecodes.insert("2","..---")
+    morsecodes.insert("3","...--")
+    morsecodes.insert("4","....-")
+    morsecodes.insert("5",".....")
+    morsecodes.insert("6","-....")
+    morsecodes.insert("7","--...")
+    morsecodes.insert("8","---..")
+    morsecodes.insert("9","----.")
+    morsecodes.insert("0","-----")
+    let mut morsestring = ""
+    for i in num.to_string().chars() {
+        morsestring.insert(morsecodes[i] + "/")
+    }}
+    format!("{:?}",morsestring)
+}
+
+fn Leaf(num) {
+    let abbreviations = ['','k', 'm', 'b', 't', 'a', 'A', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'h', 'H', 'i', 'I', 'j', 'J', 'n', 'N', 'o', 'O', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 'u', 'U', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z']
+    let numwithoutdecimal = format!("{:.0}",num)
+    let numbertodisplay = ""
+
+    let j = 0
+    for i in numwithoutdecimal.to_string().chars() {
+        if j >= 2  {
+            return
+        }
+        numbertodisplay.insert(i)
+        j = j + 1
+    }
+
+    if (num > 10^141) {
+        format!("{:?}", format!("{:.2e}",num - 10^141) + "Z")
+    }
+
+    if (numwithoutdecimal.to_string().chars() <= 3) { // below 1k, dont abbreviate at all
+        format!("{:?}",numbertodisplay)
+    }
+
+    let indexofabbreviation: f32 = ((numwithoutdecimal.to_string().chars().count()) / 3).floor() // how many triplets of zeroes are in it
+    format!("{:?}", numbertodisplay + abbreviations[indexofabbreviation]
+    
+}
+
+fn Reverse(num) {
+    format!("{:?}",num.to_string().chars().rev().collect())
+}
+
+fn Celeste(num) {
+    let celestecodes = Hashmap.new()
+    celestecodes.insert("1",":maddyhug:")
+    celestecodes.insert("2",":baddyhug:")
+    celestecodes.insert("3",":lanihug:")
+    celestecodes.insert("4",":radgranny:")
+    celestecodes.insert("5",":theoretical:")
+    celestecodes.insert("6",":reaperline:")
+    celestecodes.insert("7",":fullclear:")
+    celestecodes.insert("8",":CrystalHeart:")
+    celestecodes.insert("9",":birb:")
+    celestecodes.insert("0",":catbus:")
+    let mut celestestring = ""
+    for i in num.to_string().chars() {
+        celestestring.insert(celestecodes[i])
+    }}
+    format!("{:?}",celestestring)
+}
+
+fn Heart(num) {
+    let heartcodes = Hashmap.new()
+    heartcodes.insert("1","❤")
+    heartcodes.insert("2","🧡")
+    heartcodes.insert("3","💛")
+    heartcodes.insert("4","💚")
+    heartcodes.insert("5","💙")
+    heartcodes.insert("6","💜")
+    heartcodes.insert("7","🤎")
+    heartcodes.insert("8","🖤")
+    heartcodes.insert("9","🤍")
+    heartcodes.insert("0","💔")
+    let mut heartstring = ""
+    for i in num.to_string().chars() {
+        heartstring.insert(heartcodes[i])
+    }}
+    format!("{:?}",heartstring)
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
