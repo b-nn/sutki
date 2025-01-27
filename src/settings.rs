@@ -1,5 +1,6 @@
 use crate::change_status;
 use crate::load_game;
+use crate::save_game;
 use crate::TABS;
 use crate::SaveStruct;
 use crate::Game;
@@ -57,34 +58,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
 
 
     if ui.button("Export save to clipboard").clicked() {
-        let t = SaveStruct {
-            cats: app.cats,
-            day_offset: 0.0,
-            day_width: app.day_width,
-            cat_prices: app.cat_prices,
-            cat_times: app.cat_times,
-            currencies: app.currencies,
-            upgrades: app
-                .upgrades
-                .iter()
-                .map(|x| (x.text.to_owned(), x.count, x.max))
-                .collect(),
-            cat_strawberries: app.cat_strawberries,
-            cat_strawberry_prices: app.cat_strawberry_prices,
-            unlocked_tiers: app.unlocked_tiers,
-            cat_price_5_multiplier: app.cat_price_5_multiplier,
-            modules: app.modules,
-            challenges: app
-                .challenges
-                .iter()
-                .map(|x| (x.description.to_owned(), x.count, x.max))
-                .collect(),
-            current_challenge: app.current_challenge.id,
-            in_challenge: app.in_challenge,
-            automation_interval: app.automation_interval,
-            automation_enabled: app.automation_enabled,
-            automation_mode: app.automation_mode.clone(),
-        };
+        let t = save_game(app);
 
         match ron::to_string(&t) {
             Ok(text) => {
@@ -116,6 +90,19 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
 
     ui.add(egui::TextEdit::singleline(&mut app.settings_text_field));
 
+    if ui.button("Increase UI Scale").clicked() {
+        app.zoom += 0.1;
+    }
+    if ui.button("Decrease UI Scale").clicked() {
+        app.zoom -= 0.1;
+    }
+
+    ui.horizontal(|ui| {
+        ui.label("Current UI Scale: ");
+        ui.add(egui::DragValue::new(&mut app.zoom).speed(0.001));
+        app.zoom = app.zoom.clamp(0.4, 2.0);
+    });
+    
 
     // let t = egui::Grid::new("settings_id");
     // let t = t.spacing(Vec2::new(30.0, 0.0));
