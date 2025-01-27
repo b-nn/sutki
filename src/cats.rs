@@ -198,8 +198,11 @@ fn Heart(num) {
     format!("{:?}",heartstring)
 }
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> e3f944e1fdbcc158b61ce585c8449f8f8bfe180e
 pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
     ui.label(format!(
         "You currently have {}$ (+{}$/s)",
