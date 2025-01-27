@@ -81,6 +81,7 @@ pub struct Game {
     titles: Vec<String>,
     title_delay: f64,
     title_index: usize,
+    zoom: f32,
 }
 
 fn change_status(
@@ -116,6 +117,7 @@ pub struct SaveStruct {
     automation_interval: f64,
     automation_enabled: bool,
     automation_mode: automation::AutomationMode,
+    zoom: f32,
 }
 
 impl Default for SaveStruct {
@@ -145,6 +147,7 @@ impl Default for SaveStruct {
             automation_mode: automation::AutomationMode::MostMoney,
             automation_interval: 0.1,
             automation_enabled: false,
+            zoom: 1.0,
         }
     }
 }
@@ -209,6 +212,7 @@ impl Default for Game {
             ],
             title_delay: 0.0,
             title_index: (Utc::now().second() % 11) as usize, // should always be titles.count
+            zoom: 1.0,
         }
     }
 }
@@ -241,6 +245,7 @@ pub fn save_game(t: &mut Game) -> SaveStruct {
         automation_interval: t.automation_interval,
         automation_enabled: t.automation_enabled,
         automation_mode: t.automation_mode.clone(),
+        zoom: t.zoom,
     }
 }
 
@@ -364,6 +369,23 @@ fn update_base(app: &mut Game, cats: [f64; 31]) -> f64 {
         .sum::<f64>();
     cps
 }
+// #[cfg(not(target_arch = "wasm32"))]
+// fn set_title(ctx: &egui::Context, t: String) {
+//     ctx.send_viewport_cmd(egui::ViewportCommand::Title(t));
+// }
+//
+// #[cfg(target_arch = "wasm32")]
+// fn set_title(ctx: &egui::Context, t: String) {
+//     use eframe::wasm_bindgen::JsCast as _;
+//     wasm_bindgen_futures::spawn_local(async {});
+//
+//     let document = web_sys::window()
+//         .expect("No window")
+//         .document()
+//         .expect("No document");
+//
+//     document.title = t;
+// }
 
 fn update(app: &mut Game) {
     app.cat_multipliers = [1.0; 31];
@@ -456,6 +478,7 @@ impl eframe::App for Game {
     }
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        self.zoom = ctx.zoom_factor();
         let mut t = "sutki // ".to_owned();
         t.push_str(match self.title_index {
             0 => {
@@ -476,7 +499,9 @@ impl eframe::App for Game {
             }
             _ => &self.titles[self.title_index],
         });
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(t));
+
+        // change title here
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
@@ -549,6 +574,7 @@ impl eframe::App for Game {
         self.real_time = Local::now();
         self.automation_delay += self.dt;
         self.title_delay += self.dt;
+        ctx.set_zoom_factor(self.zoom);
         ctx.request_repaint();
     }
 }
