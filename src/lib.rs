@@ -24,6 +24,24 @@ pub enum Tab {
     Automation,
 }
 
+#[derive(PartialEq)]
+pub enum Notations {
+    Scientific,
+    Standard,
+    Engineering,
+    None,
+    Binary,
+    Hex,
+    Logarithm,
+    Emoji,
+    Blind,
+    Morse,
+    Leaf,
+    Reverse,
+    Celeste,
+    Heart
+}
+
 pub const TABS: [(&str, Tab); 5] = [
     ("Cats", Tab::Cats),
     ("Upgrades", Tab::Upgrades),
@@ -82,6 +100,7 @@ pub struct Game {
     title_delay: f64,
     title_index: usize,
     zoom: f32,
+    notation_format: Notations;
 }
 
 fn change_status(

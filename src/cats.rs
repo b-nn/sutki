@@ -15,11 +15,7 @@ pub struct Cats {
 }
 
 fn format(input: f64) -> String {
-    beepboop = Enum::Scientific //read value later idfk how to do this
-    match beepboop{
-        // for (key,value) in notations.into_iter() {
-        //     Enum::key => value()
-        // } //this wont work, ever
+    match notation_format{
         Enum::Scientific=>Scientific(input),
         Enum::Standard=>Standard(input),
         Enum::Engineering=>Engineering(input),
@@ -35,8 +31,9 @@ fn format(input: f64) -> String {
         Enum::Reverse=>Reverse(input),
         Enum::Celeste=>Celeste(input),
         Enum::Heart=>Heart(input),
-        _=>println!("how did you fuck up THIS badly") Scientific(input),
+        _=>println("how did you fuck up THIS badly") Scientific(input),
     }
+}
 
 fn Scientific(num) {
     format!("{:.2e}", input)
