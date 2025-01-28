@@ -37,7 +37,7 @@ fn format(input: f64) -> String {
 }
 
 fn Error(input: f64) {
-    print!("{}","you fucked up");
+    println!("{}","you fucked up");
     Scientific(input.to_string());
 }
 
