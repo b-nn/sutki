@@ -57,7 +57,7 @@ fn Standard(input: f64) {
         if j >= 2  {
             return;
         }
-        numbertodisplay.push(i);
+        numbertodisplay.push_str(i);
         j = j + 1;
     } // oh for fucks sake give me substr like a normal programming language
 
@@ -115,7 +115,7 @@ fn Leaf(input: f64) {
         if j >= 2  {
             return;
         }
-        numbertodisplay.push(i);
+        numbertodisplay.push_str(i);
         j = j + 1;
     }
 
@@ -146,7 +146,7 @@ fn Emoji(input: f64) {
     emojicodes.insert("0","🕸️");
     let emojistring = "";
     for i in input.to_string().chars() {
-        emojistring.push(emojicodes.get(i));
+        emojistring.push_str(emojicodes.get(i));
     }
     format!("{}",emojistring);
 }
@@ -164,7 +164,7 @@ fn Morse(input: f64) {
     morsecodes.insert("0","-----");
     let morsestring = "";
     for i in input.to_string().chars() {
-        morsestring.push(morsecodes.get(i).push_str("/"));
+        morsestring.push_str(morsecodes.get(i).push_str("/"));
     }
     format!("{}",morsestring);
 }
@@ -183,7 +183,7 @@ fn Celeste(input: f64) {
     celestecodes.insert("0",":catbus:");
     let celestestring = "";
     for i in input.to_string().chars() {
-        celestestring.push(celestecodes.get(i));
+        celestestring.push_str(celestecodes.get(i));
     }
     format!("{}",celestestring);
 }
@@ -202,7 +202,7 @@ fn Heart(input: f64) {
     heartcodes.insert("0","💔");
     let heartstring = "";
     for i in input.to_string().chars() {
-        heartstring.push(heartcodes.get(i));
+        heartstring.push_str(heartcodes.get(i));
     }
     format!("{}",heartstring);
 }
