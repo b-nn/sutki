@@ -25,6 +25,8 @@ pub enum Tab {
 }
 
 #[derive(PartialEq)]
+#[derive(serde::Serialize)]
+#[derive(serde::Deserialize)]
 pub enum Notations {
     Scientific,
     Standard,

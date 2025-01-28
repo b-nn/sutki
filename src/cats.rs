@@ -57,11 +57,11 @@ fn Standard(input: f64) {
         if j >= 2  {
             return;
         }
-        numbertodisplay = numbertodisplay + insert(i);
+        numbertodisplay.push(i);
         j = j + 1;
     } // oh for fucks sake give me substr like a normal programming language
 
-    if (numwithoutdecimal.to_string().chars() <= 3) { // below 1K, dont abbreviate at all
+    if (numwithoutdecimal.to_string().chars().count() <= 3) { // below 1K, dont abbreviate at all
         format!("{}",numbertodisplay);
     }
 
@@ -120,15 +120,15 @@ fn Leaf(input: f64) {
     }
 
     if (num > (10.0**(abbrevations.len()-1)*3)) {
-        format!("{}", format!("{:.2e}",num - 10.0**((abbrevations.len()-1)*3) + "Z"));
+        format!("{}", format!("{:.2e}",(num - 10.0**((abbrevations.len()-1)*3)).tostring().push_str("Z")));
     }
 
-    if (numwithoutdecimal.to_string().chars() <= 3) { // below 1k, dont abbreviate at all
+    if (numwithoutdecimal.to_string().chars().count() <= 3) { // below 1k, dont abbreviate at all
         format!("{}",numbertodisplay);
     }
 
     let indexofabbreviation: f32 = ((numwithoutdecimal.checked_ilog10().unwrap_or(0) + 1) / 3).floor(); // how many triplets of zeroes are in it
-    format!("{}", numbertodisplay + abbreviations[indexofabbreviation]);
+    format!("{}", numbertodisplay.push_str(abbreviations[indexofabbreviation]));
     
 }
 
@@ -146,7 +146,7 @@ fn Emoji(input: f64) {
     emojicodes.insert("0","🕸️");
     let emojistring = "";
     for i in input.to_string().chars() {
-        emojistring = &(emojistring + emojicodes.get(i));
+        emojistring.push(emojicodes.get(i));
     }
     format!("{}",emojistring);
 }
@@ -164,7 +164,7 @@ fn Morse(input: f64) {
     morsecodes.insert("0","-----");
     let morsestring = "";
     for i in input.to_string().chars() {
-        morsestring.push(morsecodes.get(i); + "/");
+        morsestring.push(morsecodes.get(i).push_str("/"));
     }
     format!("{}",morsestring);
 }
