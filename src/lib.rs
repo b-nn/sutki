@@ -33,13 +33,13 @@ pub enum Notations {
     Binary,
     Hex,
     Logarithm,
-    Emoji,
-    Blind,
-    Morse,
     Leaf,
-    Reverse,
+    Emoji,
+    Morse,
     Celeste,
     Heart
+    Reverse,
+    Blind,
 }
 
 pub const TABS: [(&str, Tab); 5] = [
@@ -100,7 +100,7 @@ pub struct Game {
     title_delay: f64,
     title_index: usize,
     zoom: f32,
-    notation_format: Notations;
+    notation_format: Notations,
 }
 
 fn change_status(
@@ -137,6 +137,7 @@ pub struct SaveStruct {
     automation_enabled: bool,
     automation_mode: automation::AutomationMode,
     zoom: f32,
+    notation_format: Notations,
 }
 
 impl Default for SaveStruct {
@@ -167,6 +168,7 @@ impl Default for SaveStruct {
             automation_interval: 0.1,
             automation_enabled: false,
             zoom: 1.0,
+            notation_format: Notations::Scientific,
         }
     }
 }

@@ -3,6 +3,7 @@ use crate::Game;
 use chrono::{self, Duration, NaiveTime};
 use egui::debug_text::print;
 use egui::{RichText, Ui};
+use std::collections::HashMap;
 
 enum CatInfo {
     Multiplier,
@@ -16,205 +17,220 @@ pub struct Cats {
 
 fn format(input: f64) -> String {
     match notation_format{
-        Enum::Scientific=>Scientific(input),
-        Enum::Standard=>Standard(input),
-        Enum::Engineering=>Engineering(input),
-        Enum::None=>None(input),
-        Enum::Binary=>Binary(input),
-        Enum::Hex=>Hex(input),
-        Enum::Logarithm=>Logarithm(input),
-        Enum::Emoji=>Emoji(input),
-        Enum::Blind=>Blind(input),
-        Enum::Morse=>Morse(input),
-        Enum::Zalgo=>Zalgo(input),
-        Enum::Leaf=>Leaf(input),
-        Enum::Reverse=>Reverse(input),
-        Enum::Celeste=>Celeste(input),
-        Enum::Heart=>Heart(input),
-        _=>println("how did you fuck up THIS badly") Scientific(input),
+        Notations::Scientific=>Scientific(input),
+        Notations::Standard=>Standard(input),
+        Notations::Engineering=>Engineering(input),
+        Notations::None=>None(input),
+        Notations::Binary=>Binary(input),
+        Notations::Hex=>Hex(input),
+        Notations::Logarithm=>Logarithm(input),
+        Notations::Emoji=>Emoji(input),
+        Notations::Blind=>Blind(input),
+        Notations::Morse=>Morse(input),
+        Notations::Zalgo=>Zalgo(input),
+        Notations::Leaf=>Leaf(input),
+        Notations::Reverse=>Reverse(input),
+        Notations::Celeste=>Celeste(input),
+        Notations::Heart=>Heart(input),
+        _=>Error(input),
     }
 }
 
-fn Scientific(num) {
-    format!("{:.2e}", input)
+fn Error(input: f64) {
+    print!("{}","you fucked up");
+    Scientific(input.to_string());
 }
 
-fn Standard(num) {
-    let abbreviation1 = ['','K','M','B','T','Qd','Qn','Sx','Sp','Oc','No'] // only used once, use abbreviations 2 and 3 for everything above 1 No
-    let abbreviation2 = ['','U','D','T','Qa','Qn','Sx','Sp','Oc','No']
-    let abbreviation3 = ['','De','Vg','Tg','Qd','Qn','Se','Sg','Og','Ng','Ce','Dn','Tc','Qe','Qu','Sc','Si','Oe','Ne']
-    let numwithoutdecimal = format!("{:.0}",num)
-    let numbertodisplay = ""
+fn Scientific(input: f64) {
+    format!("{:.2e}", input.to_string());
+}
 
-    let j = 0
+fn Standard(input: f64) {
+    let abbreviation1 = ["","K","M","B","T","Qd","Qn","Sx","Sp","Oc","No"]; // only used once, use abbreviations 2 and 3 for everything above 1 No
+    let abbreviation2 = ["","U","D","T","Qa","Qn","Sx","Sp","Oc","No"];
+    let abbreviation3 = ["","De","Vg","Tg","Qd","Qn","Se","Sg","Og","Ng","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
+    let numwithoutdecimal = input.trunc()
+    let numbertodisplay = "";
+
+    let j = 0;
     for i in numwithoutdecimal.to_string().chars() {
         if j >= 2  {
-            return
+            return;
         }
-        numbertodisplay.insert(i)
-        j = j + 1
+        numbertodisplay = numbertodisplay + insert(i);
+        j = j + 1;
     } // oh for fucks sake give me substr like a normal programming language
 
     if (numwithoutdecimal.to_string().chars() <= 3) { // below 1K, dont abbreviate at all
-        format!("{:?}",numbertodisplay)
+        format!("{}",numbertodisplay);
     }
 
-    let indexofabbreviation: f32 = ((numwithoutdecimal.to_string().chars().count()) / 3).floor() // how many triplets of zeroes are in it
-    let abtwotouse = indexofabbreviation % 11 // 
+    let indexofabbreviation: f32 = if numwithoutdecimal == 0 {
+        1 // Handle the special case for 0
+    } else {
+        (numwithoutdecimal.abs().to_string().len() / 3).floor()
+    }; // how many triplets of zeroes are in it
+
+    let abtwotouse = indexofabbreviation % 11;
 
     if indexofabbreviation < 11 { // below 1 Dc, use abbreviations 1
-        format!("{:?}",numbertodisplay + abbreviation1[indexofabbreviation])
+        format!("{}",numbertodisplay + abbreviation1[indexofabbreviation]);
     } else {
-        amountofabthree = indexofabbreviation/11
-        format!("{:?}", numbertodisplay + abbreviation2[indexofabbreviation % 11 + 1] + abbrevation3[(indexofabbreviation/11).floor()])
+        amountofabthree = indexofabbreviation/11;
+        format!("{}", numbertodisplay + abbreviation2[indexofabbreviation % 11 + 1] + abbrevation3[(indexofabbreviation/11).floor()]);
     }
 
 }
 
-fn Engineering(num) {
-    let exp = ((num.abs().log10() / 3.0).round() * 3.0; as i64).clamp(-f64::MAX_10_EXP, f64::MAX_10_EXP);
-    let sig = num * (10_f64).powi(-exp);
-    format!("{:?}","{sig}*10^{exp}")
+fn Engineering(input: f64) {
+    let exponent = (input.log10().floor() as i32 / 3) * 3;
+    let normalized_base = input / 10f64.powi(exponent);
+    // Format the engineering notation
+    format!("{:.3} x 10^{}", normalized_base, exponent);
 }
 
-fn None(num) {
-    format!("{:?}",input)
-}
-fn Binary(num) {
-    format!("{x:b}",input)
-}
-fn Hex(num) {
-    format!("{y:x}",input)
-}
-fn Logarithm(num) {
-    format!("e{:?}",num.log10())
-}
-fn Emoji(num) {
-    let emojicodes = Hashmap.new()
-    emojicodes.insert("1","🐦‍🔥")
-    emojicodes.insert("2","🍓")
-    emojicodes.insert("3","🔱")
-    emojicodes.insert("4","💅")
-    emojicodes.insert("5","🏳️‍⚧️")
-    emojicodes.insert("6","🎲")
-    emojicodes.insert("7","🎰")
-    emojicodes.insert("8","🎡")
-    emojicodes.insert("9","🫨")
-    emojicodes.insert("0","🕸️")
-    let mut emojistring = ""
-    for i in num.to_string().chars() {
-        emojistring.insert(emojicodes[i])
-    }}
-    format!("{:?}",emojistring)
-}
-fn Blind(num) {
-    format!("{:?}","")
-}
-fn Morse(num) {
-    let morsecodes = Hashmap.new()
-    morsecodes.insert("1",".----")
-    morsecodes.insert("2","..---")
-    morsecodes.insert("3","...--")
-    morsecodes.insert("4","....-")
-    morsecodes.insert("5",".....")
-    morsecodes.insert("6","-....")
-    morsecodes.insert("7","--...")
-    morsecodes.insert("8","---..")
-    morsecodes.insert("9","----.")
-    morsecodes.insert("0","-----")
-    let mut morsestring = ""
-    for i in num.to_string().chars() {
-        morsestring.insert(morsecodes[i] + "/")
-    }}
-    format!("{:?}",morsestring)
+fn None(input: f64) {
+    format!("{}",input);
 }
 
-fn Leaf(num) {
-    let abbreviations = ['','k', 'm', 'b', 't', 'a', 'A', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'h', 'H', 'i', 'I', 'j', 'J', 'n', 'N', 'o', 'O', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 'u', 'U', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z']
-    let numwithoutdecimal = format!("{:.0}",num)
-    let numbertodisplay = ""
+fn Binary(input: f64) {
+    format!("{}",input);
+}
 
-    let j = 0
+fn Hex(input: f64) {
+    format!("{}",input);
+}
+
+fn Logarithm(input: f64) {
+    format!("e{}",input.log10());
+}
+
+fn Leaf(input: f64) {
+    let abbreviations = ["", "k", "m", "b", "t", "a", "A", "c", "C", "d", "D", "e", "E", "f", "F", "g", "G", "h", "H", "i", "I", "j", "J", "n", "N", "o", "O", "p", "P", "q", "Q", "r", "R", "s", "S", "u", "U", "v", "V", "w", "W", "x", "X", "y", "Y", "z", "Z"];
+    let numwithoutdecimal = input.trunc()
+    let numbertodisplay = "";
+
+    let j = 0;
     for i in numwithoutdecimal.to_string().chars() {
         if j >= 2  {
-            return
+            return;
         }
-        numbertodisplay.insert(i)
-        j = j + 1
+        numbertodisplay.push(i);
+        j = j + 1;
     }
 
-    if (num > 10^141) {
-        format!("{:?}", format!("{:.2e}",num - 10^141) + "Z")
+    if (num > (10.0**(abbrevations.len()-1)*3)) {
+        format!("{}", format!("{:.2e}",num - 10.0**((abbrevations.len()-1)*3) + "Z"));
     }
 
     if (numwithoutdecimal.to_string().chars() <= 3) { // below 1k, dont abbreviate at all
-        format!("{:?}",numbertodisplay)
+        format!("{}",numbertodisplay);
     }
 
-    let indexofabbreviation: f32 = ((numwithoutdecimal.to_string().chars().count()) / 3).floor() // how many triplets of zeroes are in it
-    format!("{:?}", numbertodisplay + abbreviations[indexofabbreviation]
+    let indexofabbreviation: f32 = ((numwithoutdecimal.checked_ilog10().unwrap_or(0) + 1) / 3).floor(); // how many triplets of zeroes are in it
+    format!("{}", numbertodisplay + abbreviations[indexofabbreviation]);
     
 }
 
-fn Reverse(num) {
-    format!("{:?}",num.to_string().chars().rev().collect())
+fn Emoji(input: f64) {
+    let emojicodes = Hashmap.new();
+    emojicodes.insert("1","🐦‍🔥");
+    emojicodes.insert("2","🍓");
+    emojicodes.insert("3","🔱");
+    emojicodes.insert("4","💅");
+    emojicodes.insert("5","🏳️‍⚧️");
+    emojicodes.insert("6","🎲");
+    emojicodes.insert("7","🎰");
+    emojicodes.insert("8","🎡");
+    emojicodes.insert("9","🫨");
+    emojicodes.insert("0","🕸️");
+    let emojistring = "";
+    for i in input.to_string().chars() {
+        emojistring = &(emojistring + emojicodes.get(i));
+    }
+    format!("{}",emojistring);
+}
+fn Morse(input: f64) {
+    let morsecodes = Hashmap.new();
+    morsecodes.insert("1",".----");
+    morsecodes.insert("2","..---");
+    morsecodes.insert("3","...--");
+    morsecodes.insert("4","....-");
+    morsecodes.insert("5",".....");
+    morsecodes.insert("6","-....");
+    morsecodes.insert("7","--...");
+    morsecodes.insert("8","---..");
+    morsecodes.insert("9","----.");
+    morsecodes.insert("0","-----");
+    let morsestring = "";
+    for i in input.to_string().chars() {
+        morsestring.push(morsecodes.get(i); + "/");
+    }
+    format!("{}",morsestring);
 }
 
-fn Celeste(num) {
-    let celestecodes = Hashmap.new()
-    celestecodes.insert("1",":maddyhug:")
-    celestecodes.insert("2",":baddyhug:")
-    celestecodes.insert("3",":lanihug:")
-    celestecodes.insert("4",":radgranny:")
-    celestecodes.insert("5",":theoretical:")
-    celestecodes.insert("6",":reaperline:")
-    celestecodes.insert("7",":fullclear:")
-    celestecodes.insert("8",":CrystalHeart:")
-    celestecodes.insert("9",":birb:")
-    celestecodes.insert("0",":catbus:")
-    let mut celestestring = ""
-    for i in num.to_string().chars() {
-        celestestring.insert(celestecodes[i])
-    }}
-    format!("{:?}",celestestring)
+fn Celeste(input: f64) {
+    let celestecodes = Hashmap.new();
+    celestecodes.insert("1",":maddyhug:");
+    celestecodes.insert("2",":baddyhug:");
+    celestecodes.insert("3",":lanihug:");
+    celestecodes.insert("4",":radgranny:");
+    celestecodes.insert("5",":theoretical:");
+    celestecodes.insert("6",":reaperline:");
+    celestecodes.insert("7",":fullclear:");
+    celestecodes.insert("8",":CrystalHeart:");
+    celestecodes.insert("9",":birb:");
+    celestecodes.insert("0",":catbus:");
+    let celestestring = "";
+    for i in input.to_string().chars() {
+        celestestring.push(celestecodes.get(i));
+    }
+    format!("{}",celestestring);
 }
 
-fn Heart(num) {
-    let heartcodes = Hashmap.new()
-    heartcodes.insert("1","❤")
-    heartcodes.insert("2","🧡")
-    heartcodes.insert("3","💛")
-    heartcodes.insert("4","💚")
-    heartcodes.insert("5","💙")
-    heartcodes.insert("6","💜")
-    heartcodes.insert("7","🤎")
-    heartcodes.insert("8","🖤")
-    heartcodes.insert("9","🤍")
-    heartcodes.insert("0","💔")
-    let mut heartstring = ""
-    for i in num.to_string().chars() {
-        heartstring.insert(heartcodes[i])
-    }}
-    format!("{:?}",heartstring)
+fn Heart(input: f64) {
+    let heartcodes = Hashmap.new();
+    heartcodes.insert("1","❤");
+    heartcodes.insert("2","🧡");
+    heartcodes.insert("3","💛");
+    heartcodes.insert("4","💚");
+    heartcodes.insert("5","💙");
+    heartcodes.insert("6","💜");
+    heartcodes.insert("7","🤎");
+    heartcodes.insert("8","🖤");
+    heartcodes.insert("9","🤍");
+    heartcodes.insert("0","💔");
+    let heartstring = "";
+    for i in input.to_string().chars() {
+        heartstring.push(heartcodes.get(i));
+    }
+    format!("{}",heartstring);
 }
 
-<<<<<<< HEAD
+fn Reverse(input: f64) {
+    format!("{}",input.to_string()chars().rev().collect::<String>(););
+}
+
+fn Blind(_input: f64) {
+    format!("{}","");
+}
 
 
-=======
->>>>>>> e3f944e1fdbcc158b61ce585c8449f8f8bfe180e
 pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
+    
     ui.label(format!(
         "You currently have {}$ (+{}$/s)",
         format(app.currencies[0]),
         format(app.cps)
     ));
+
     if app.unlocked_tiers[1] {
         ui.label(format!(
             "You have {} strawberries.",
             format(app.currencies[1])
         ));
     }
+
     let tomorrow_midnight = (app.date + Duration::days(1))
         .with_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
         .unwrap();
@@ -224,6 +240,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
         (tomorrow_midnight - app.date).num_seconds() as f64
             / 2_f64.powi(app.upgrades[2].count as i32),
     ));
+
     egui::ScrollArea::vertical()
         .drag_to_scroll(false)
         .show(ui, |ui| {
