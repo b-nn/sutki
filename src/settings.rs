@@ -6,7 +6,7 @@ use crate::TABS;
 use crate::SaveStruct;
 use crate::MODULES;
 use egui::Ui;
-use std::collections::HashMap;
+use crate::cats::Notations;
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
     ui.horizontal(|ui| {
@@ -28,42 +28,26 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
     });
 
-    // let mut notationoptions = HashMap::new();
-    // notationoptions.insert(Notations::Scientific, "Scientific");
-    // notationoptions.insert(Notations::Standard, "Standard");
-    // notationoptions.insert(Notations::Engineering, "Engineering");
-    // notationoptions.insert(Notations::None, "None");
-    // notationoptions.insert(Notations::Binary, "Binary");
-    // notationoptions.insert(Notations::Hex, "Hex");
-    // notationoptions.insert(Notations::Logarithm, "Logarithm");
-    // notationoptions.insert(Notations::Leaf, "Leaf");
-    // notationoptions.insert(Notations::Emoji, "🇪🇲​🇴🇯🇮");
-    // notationoptions.insert(Notations::Morse, "-- --- .-. ... .")
-    // notationoptions.insert(Notations::Celeste, "Celeste");
-    // notationoptions.insert(Notations::Heart, "Heart");
-    // notationoptions.insert(Notations::Reverse, "Reverse");
-    // notationoptions.insert(Notations::Blind, "");
-    
-    egui::ComboBox::from_label("Select Notation").selected_text(format!("{:?}", selected)).show_ui(ui, |ui|) {
-        // for (key, value) in notationoptions.into_iter() {
-        //     ui.selectable_value(&mut selected, key, value);
-            
-        // }
-        ui.selectable_value(&mut selected, Notations::Scientific, "Scientific");
-        ui.selectable_value(&mut selected, Notations::Standard, "Standard");
-        ui.selectable_value(&mut selected, Notations::Engineering, "Engineering");
-        ui.selectable_value(&mut selected, Notations::None, "None");
-        ui.selectable_value(&mut selected, Notations::Binary, "Binary");
-        ui.selectable_value(&mut selected, Notations::Hex, "Hex");
-        ui.selectable_value(&mut selected, Notations::Logarithm, "Logarithm");
-        ui.selectable_value(&mut selected, Notations::Leaf, "Leaf");
-        ui.selectable_value(&mut selected, Notations::Emoji, "🇪🇲​🇴🇯🇮");
-        ui.selectable_value(&mut selected, Notations::Morse, "-- --- .-. ... .");
-        ui.selectable_value(&mut selected, Notations::Celeste, "Celeste");
-        ui.selectable_value(&mut selected, Notations::Heart, "Heart");
-        ui.selectable_value(&mut selected, Notations::Reverse, "Reverse");
-        ui.selectable_value(&mut selected, Notations::Blind, "");
-    };
+    ui.label("Notation:");
+    egui::ComboBox::from_label("Select one!")
+        .selected_text(format!("{:?}", app.notation_format))
+        .show_ui(ui, |ui| {
+            ui.selectable_value(&mut app.notation_format, Notations::Scientific, "Scientific");
+            ui.selectable_value(&mut app.notation_format, Notations::Standard, "Standard");
+            ui.selectable_value(&mut app.notation_format, Notations::Engineering, "Engineering");
+            ui.selectable_value(&mut app.notation_format, Notations::None, "None");
+            ui.selectable_value(&mut app.notation_format, Notations::Binary, "Binary");
+            ui.selectable_value(&mut app.notation_format, Notations::Hex, "Hex");
+            ui.selectable_value(&mut app.notation_format, Notations::Logarithm, "Logarithm");
+            ui.selectable_value(&mut app.notation_format, Notations::Leaf, "Leaf");
+            ui.selectable_value(&mut app.notation_format, Notations::Emoji, "🇪🇲​🇴🇯🇮");
+            ui.selectable_value(&mut app.notation_format, Notations::Morse, "-- --- .-. ... .");
+            ui.selectable_value(&mut app.notation_format, Notations::Celeste, "Celeste");
+            ui.selectable_value(&mut app.notation_format, Notations::Heart, "Heart");
+            ui.selectable_value(&mut app.notation_format, Notations::Reverse, "Reverse");
+            ui.selectable_value(&mut app.notation_format, Notations::Blind, "");
+        }
+    );
     
 
 
