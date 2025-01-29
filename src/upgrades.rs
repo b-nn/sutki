@@ -12,6 +12,7 @@ pub struct Upgrade {
     pub effect: fn(&mut Game, i64),
     pub tier: usize,
 }
+
 pub fn get_upgrades() -> Vec<Upgrade> {
     vec![
         Upgrade {
@@ -211,9 +212,9 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
                 price <= app.currencies[app.upgrades[i].tier]
                     && app.upgrades[i].count < app.upgrades[i].max,
                 egui::Button::new(format!(
-                    "{} {}{} [{}/{}]",
+                    "{} {:.2}{} [{}/{}]",
                     app.upgrades[i].text,
-                    format_number(price),
+                    price,
                     app.currency_symbols[app.upgrades[i].tier],
                     app.upgrades[i].count,
                     app.upgrades[i].max
@@ -222,7 +223,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             .on_hover_text(&app.upgrades[i].description)
             .on_disabled_hover_text(format!(
                 "[{}s, x{}] {}",
-                format_number(((price - app.currencies[app.upgrades[i].tier]) / app.cps).ceil()),
+                ((price - app.currencies[app.upgrades[i].tier]) / app.cps).ceil(),
                 app.upgrades[i].price_mult,
                 app.upgrades[i].description
             ))

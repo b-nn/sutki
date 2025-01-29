@@ -1,6 +1,0 @@
-$ mkdir -p "C:\\Users\\cyrus\\Documents\\GitHub\\sutki\\target\\debug\\build\\az-f4fe0e8ee8b63238\\out\\try_track_caller"
-$ cd "C:\\Users\\cyrus\\Documents\\GitHub\\sutki\\target\\debug\\build\\az-f4fe0e8ee8b63238\\out\\try_track_caller"
-$ printf '%s' "// try_tra"... > "C:\\Users\\cyrus\\Documents\\GitHub\\sutki\\target\\debug\\build\\az-f4fe0e8ee8b63238\\out\\try_track_caller\\try_track_caller.rs"
-$ "rustc" "try_track_caller.rs" "--emit=dep-info,metadata" >& /dev/null
-cargo:rustc-cfg=track_caller
-$ rm -r "C:\\Users\\cyrus\\Documents\\GitHub\\sutki\\target\\debug\\build\\az-f4fe0e8ee8b63238\\out\\try_track_caller"
