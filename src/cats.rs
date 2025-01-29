@@ -1,7 +1,6 @@
 use crate::within_day_range;
 use crate::Game;
 use chrono::{self, Duration, NaiveTime};
-use egui::debug_text::print;
 use egui::{RichText, Ui};
 use std::collections::HashMap;
 
@@ -49,13 +48,7 @@ fn format(app: &Game, input: f64) -> String {
         Notations::Reverse=>reverse(input),
         Notations::Celeste=>celeste(input),
         Notations::Heart=>heart(input),
-        _=>error(input),
     }
-}
-
-fn error(input: f64) -> String {
-    println!("{}","you fucked up");
-    format!("ERROR{:.2e}", input)
 }
 
 fn scientific(input: f64) -> String {
@@ -66,25 +59,24 @@ fn standard(input: f64) -> String {
     let abbreviation1 = ["","K","M","B","T","Qd","Qn","Sx","Sp","Oc","No"]; // only used once, use abbreviations 2 and 3 for everything above 1 No
     let abbreviation2 = ["","U","D","T","Qa","Qn","Sx","Sp","Oc","No"];
     let abbreviation3 = ["","De","Vg","Tg","Qd","Qn","Se","Sg","Og","Ng","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
-    let num_without_decimal = input.trunc();
-
-    let mut number_to_display = num_without_decimal.to_string().chars().take(3).collect();
-
-    if num_without_decimal.to_string().chars().count() <= 3 { // below 1K, dont abbreviate at all
-        return number_to_display;
+    
+    if input < 1000.0 { // below 1K, dont abbreviate at all
+        return input.to_string();
     }
+    
+    let truncated_str = input.trunc().to_string();
+    let exponent: f64 = input.log10().floor() as f64;
+    let closest_exponent = (exponent/3.0).floor() as usize;
+    let digits_to_display = (closest_exponent % 3) - 1;
+    let mut number_to_display = truncated_str[0..digits_to_display].to_string();
 
-    let index_of_abbreviation = (num_without_decimal.log10().floor() / 3.0).floor() as usize;
-
-    if index_of_abbreviation < 11 { // below 1 Dc, use abbreviations 1
-        number_to_display.push_str(abbreviation1[index_of_abbreviation]);
+    if closest_exponent < 11 { // below 1 Dc, use abbreviations 1
+        number_to_display.push_str(abbreviation1[closest_exponent]);
     } else {
-        let amount_of_abthree = index_of_abbreviation / 11;
-        number_to_display.push_str(abbreviation2[index_of_abbreviation % 11]);
-        number_to_display.push_str(abbreviation3[amount_of_abthree]);
+        number_to_display.push_str(abbreviation2[closest_exponent % 11]);
+        number_to_display.push_str(abbreviation3[closest_exponent / 11]);
     }
-    number_to_display
-
+    return format!("{}",number_to_display)
 }
 
 fn engineering(input: f64) -> String {
@@ -98,7 +90,7 @@ fn none(input: f64) -> String {
 }
 
 fn binary(input: f64) -> String {
-    return input.to_bits().to_string();
+    format!("{:064b}", input.to_bits())
 }
 
 fn hex(input: f64) -> String {
