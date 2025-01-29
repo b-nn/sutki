@@ -6,6 +6,7 @@ use crate::SaveStruct;
 use crate::Game;
 use crate::MODULES;
 use egui::Ui;
+use crate::cats::Notations;
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
     ui.horizontal(|ui| {
@@ -26,6 +27,27 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             if index != TABS.len() {ui.separator();};
         }
     });
+
+    ui.label("Notation:");
+    egui::ComboBox::from_label("Select one!")
+        .selected_text(format!("{:?}", app.notation_format))
+        .show_ui(ui, |ui| {
+            ui.selectable_value(&mut app.notation_format, Notations::Scientific, "Scientific");
+            ui.selectable_value(&mut app.notation_format, Notations::Standard, "Standard");
+            ui.selectable_value(&mut app.notation_format, Notations::Engineering, "Engineering");
+            ui.selectable_value(&mut app.notation_format, Notations::None, "None");
+            ui.selectable_value(&mut app.notation_format, Notations::Binary, "Binary");
+            ui.selectable_value(&mut app.notation_format, Notations::Hex, "Hex");
+            ui.selectable_value(&mut app.notation_format, Notations::Logarithm, "Logarithm");
+            ui.selectable_value(&mut app.notation_format, Notations::Leaf, "Leaf");
+            ui.selectable_value(&mut app.notation_format, Notations::Emoji, "🇪🇲​🇴🇯🇮");
+            ui.selectable_value(&mut app.notation_format, Notations::Morse, "-- --- .-. ... .");
+            ui.selectable_value(&mut app.notation_format, Notations::Celeste, "Celeste");
+            ui.selectable_value(&mut app.notation_format, Notations::Heart, "Heart");
+            ui.selectable_value(&mut app.notation_format, Notations::Reverse, "Reverse");
+            ui.selectable_value(&mut app.notation_format, Notations::Blind, "");
+        }
+    );
 
     if ui.button("Export save to clipboard").clicked() {
         let t = save_game(app);

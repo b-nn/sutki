@@ -82,6 +82,7 @@ pub struct Game {
     title_delay: f64,
     title_index: usize,
     zoom: f32,
+    notation_format: cats::Notations,
 }
 
 fn change_status(
@@ -118,6 +119,7 @@ pub struct SaveStruct {
     automation_enabled: bool,
     automation_mode: automation::AutomationMode,
     zoom: f32,
+    notation_format: cats::Notations,
 }
 
 impl Default for SaveStruct {
@@ -148,6 +150,7 @@ impl Default for SaveStruct {
             automation_interval: 0.1,
             automation_enabled: false,
             zoom: 1.0,
+            notation_format: cats::Notations::Scientific,
         }
     }
 }
@@ -233,6 +236,7 @@ impl Default for Game {
             title_delay: 0.0,
             title_index: (Utc::now().second() % 31) as usize, // should always be titles.count
             zoom: 1.0,
+            notation_format: cats::Notations::Scientific,
         }
     }
 }
@@ -266,6 +270,7 @@ pub fn save_game(t: &mut Game) -> SaveStruct {
         automation_enabled: t.automation_enabled,
         automation_mode: t.automation_mode.clone(),
         zoom: t.zoom,
+        notation_format: t.notation_format.clone(),
     }
 }
 
@@ -497,7 +502,7 @@ impl eframe::App for Game {
         );
     }
 
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.zoom = ctx.zoom_factor();
         let mut t = "sutki // ".to_owned();
         t.push_str(match self.title_index {

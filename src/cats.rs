@@ -3,6 +3,7 @@ use crate::Game;
 use chrono::{self, Duration, NaiveTime};
 use egui::debug_text::print;
 use egui::{RichText, Ui};
+use std::collections::HashMap;
 
 enum CatInfo {
     Multiplier,
@@ -14,24 +15,239 @@ pub struct Cats {
     info_type: CatInfo,
 }
 
-fn format(input: f64) -> String {
-    if input > 100000.0 {
-        format!("{:.2e}", input)
-    } else {
-        format!("{:.2}", input)
+#[derive(serde::Deserialize, serde::Serialize, Debug, PartialEq, Clone)]
+pub enum Notations {
+    Scientific,
+    Standard,
+    Engineering,
+    None,
+    Binary,
+    Hex,
+    Logarithm,
+    Leaf,
+    Emoji,
+    Morse,
+    Celeste,
+    Heart,
+    Reverse,
+    Blind,
+}
+
+fn format(app: &Game, input: f64) -> String {
+    match app.notation_format {
+        Notations::Scientific=>scientific(input),
+        Notations::Standard=>standard(input),
+        Notations::Engineering=>engineering(input),
+        Notations::None=>none(input),
+        Notations::Binary=>binary(input),
+        Notations::Hex=>hex(input),
+        Notations::Logarithm=>logarithm(input),
+        Notations::Emoji=>emoji(input),
+        Notations::Blind=>blind(input),
+        Notations::Morse=>morse(input),
+        Notations::Leaf=>leaf(input),
+        Notations::Reverse=>reverse(input),
+        Notations::Celeste=>celeste(input),
+        Notations::Heart=>heart(input),
+        _=>error(input),
     }
+}
+
+fn error(input: f64) -> String {
+    println!("{}","you fucked up");
+    format!("ERROR{:.2e}", input)
+}
+
+fn scientific(input: f64) -> String {
+    format!("{:.2e}", input)
+}
+
+fn standard(input: f64) -> String {
+    let abbreviation1 = ["","K","M","B","T","Qd","Qn","Sx","Sp","Oc","No"]; // only used once, use abbreviations 2 and 3 for everything above 1 No
+    let abbreviation2 = ["","U","D","T","Qa","Qn","Sx","Sp","Oc","No"];
+    let abbreviation3 = ["","De","Vg","Tg","Qd","Qn","Se","Sg","Og","Ng","Ce","Dn","Tc","Qe","Qu","Sc","Si","Oe","Ne"];
+    let num_without_decimal = input.trunc();
+
+    let mut number_to_display = num_without_decimal.to_string().chars().take(3).collect();
+
+    if num_without_decimal.to_string().chars().count() <= 3 { // below 1K, dont abbreviate at all
+        return number_to_display;
+    }
+
+    let index_of_abbreviation = (num_without_decimal.log10().floor() / 3.0).floor() as usize;
+
+    if index_of_abbreviation < 11 { // below 1 Dc, use abbreviations 1
+        number_to_display.push_str(abbreviation1[index_of_abbreviation]);
+    } else {
+        let amount_of_abthree = index_of_abbreviation / 11;
+        number_to_display.push_str(abbreviation2[index_of_abbreviation % 11]);
+        number_to_display.push_str(abbreviation3[amount_of_abthree]);
+    }
+    number_to_display
+
+}
+
+fn engineering(input: f64) -> String {
+    let exponent = (input.log10().floor() as i32 / 3) * 3;
+    let normalized_base = input / 10f64.powi(exponent);
+    format!("{:.3}e{}", normalized_base, exponent)
+}
+
+fn none(input: f64) -> String {
+    return input.to_string();
+}
+
+fn binary(input: f64) -> String {
+    return input.to_bits().to_string();
+}
+
+fn hex(input: f64) -> String {
+    format!("{:016x}", input.to_bits())
+}
+
+fn logarithm(input: f64) -> String {
+    format!("e{}",input.log10())
+}
+
+fn leaf(input: f64) -> String {
+    let abbreviations = ["", "k", "m", "b", "t", "a", "A", "c", "C", "d", "D", "e", "E", "f", "F", "g", "G", "h", "H", "i", "I", "j", "J", "n", "N", "o", "O", "p", "P", "q", "Q", "r", "R", "s", "S", "u", "U", "v", "V", "w", "W", "x", "X", "y", "Y", "z", "Z"];
+    
+    let num_without_decimal = input.trunc();
+    let mut number_to_display = String::new(); // Use a mutable String
+
+    // Limit to the first 2 digits
+    let digits: String = num_without_decimal.to_string().chars().take(3).collect();
+    number_to_display.push_str(&digits); // Append to the display string
+
+    // Check if we need to display in scientific notation
+    if input > 10.0f64.powi(abbreviations.len() as i32 * 3 - 1) {
+        let exponent = (abbreviations.len() - 1) as f64 * 3.0;
+        return format!("{:.2e}Z", input / 10.0f64.powf(exponent));
+    }
+
+    // If the number is less than 1k, return the number without abbreviation
+    if num_without_decimal.to_string().chars().count() <= 3 {
+        return num_without_decimal.to_string();
+    }
+
+    // Calculate the index for the abbreviation
+    let index_of_abbreviation = (num_without_decimal.log10().floor() / 3.0).min((abbreviations.len() - 1) as f64) as usize;
+
+    // Append the appropriate abbreviation
+    number_to_display.push_str(abbreviations[index_of_abbreviation]);
+
+    return number_to_display // Return the constructed number string
+}
+
+fn emoji(input: f64) -> String {
+    let mut emojicodes = HashMap::new();
+    emojicodes.insert('1',"🐦‍🔥");
+    emojicodes.insert('2',"🍓");
+    emojicodes.insert('3',"🔱");
+    emojicodes.insert('4',"💅");
+    emojicodes.insert('5',"🏳️‍⚧️");
+    emojicodes.insert('6',"🎲");
+    emojicodes.insert('7',"🎰");
+    emojicodes.insert('8',"🎡");
+    emojicodes.insert('9',"🫨");
+    emojicodes.insert('0',"🕸️");
+    emojicodes.insert('.',".");
+
+    let mut emojistring = String::new();
+    for i in input.to_string().chars() {
+        if let Some(&emoji) = emojicodes.get(&i) {
+            emojistring.push_str(emoji);
+        }
+    }
+    emojistring
+}
+fn morse(input: f64) -> String {
+    let mut morsecodes = HashMap::new();
+    morsecodes.insert('1',".----");
+    morsecodes.insert('2',"..---");
+    morsecodes.insert('3',"...--");
+    morsecodes.insert('4',"....-");
+    morsecodes.insert('5',".....");
+    morsecodes.insert('6',"-....");
+    morsecodes.insert('7',"--...");
+    morsecodes.insert('8',"---..");
+    morsecodes.insert('9',"----.");
+    morsecodes.insert('0',"-----");
+    morsecodes.insert('.',".");
+
+    let mut morsestring = String::new();
+    for i in input.to_string().chars() {
+        if let Some(&morse) = morsecodes.get(&i) {
+            morsestring.push_str(morse);
+        }
+    }
+    morsestring
+}
+
+fn celeste(input: f64) -> String {
+    let mut celestecodes = HashMap::new();
+    celestecodes.insert('1',":maddyhug:");
+    celestecodes.insert('2',":baddyhug:");
+    celestecodes.insert('3',":lanihug:");
+    celestecodes.insert('4',":radgranny:");
+    celestecodes.insert('5',":theoretical:");
+    celestecodes.insert('6',":reaperline:");
+    celestecodes.insert('7',":fullclear:");
+    celestecodes.insert('8',":CrystalHeart:");
+    celestecodes.insert('9',":birb:");
+    celestecodes.insert('0',":catbus:");
+    celestecodes.insert('.', ".");
+
+    let mut celestestring = String::new();
+    for i in input.to_string().chars() {
+        if let Some(&celeste) = celestecodes.get(&i) {
+            celestestring.push_str(celeste);
+        }
+    }
+    celestestring
+}
+
+fn heart(input: f64) -> String {
+    let mut heartcodes = HashMap::new();
+    heartcodes.insert('1', "❤");
+    heartcodes.insert('2', "🧡");
+    heartcodes.insert('3', "💛");
+    heartcodes.insert('4', "💚");
+    heartcodes.insert('5', "💙");
+    heartcodes.insert('6', "💜");
+    heartcodes.insert('7', "🤎");
+    heartcodes.insert('8', "🖤");
+    heartcodes.insert('9', "🤍");
+    heartcodes.insert('0', "💔");
+    heartcodes.insert('.', ".");
+
+    let mut heartstring = String::new();
+    for i in input.to_string().chars() {
+        if let Some(&heart) = heartcodes.get(&i) {
+            heartstring.push_str(heart);
+        }
+    }
+    heartstring // Return the constructed heart string
+}
+
+fn reverse(input: f64) -> String {
+    format!("{}",input.to_string().chars().rev().collect::<String>())
+}
+
+fn blind(_input: f64) -> String {
+    format!("{}","")
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
     ui.label(format!(
         "You currently have {}$ (+{}$/s)",
-        format(app.currencies[0]),
-        format(app.cps)
+        format(app, app.currencies[0]),
+        format(app, app.cps)
     ));
     if app.unlocked_tiers[1] {
         ui.label(format!(
             "You have {} strawberries.",
-            format(app.currencies[1])
+            format(app, app.currencies[1])
         ));
     }
     let tomorrow_midnight = (app.date + Duration::days(1))
@@ -49,7 +265,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
             ui.set_min_width(330.0);
 
             // cat_handler(app, ui);
-            let image = egui::include_image!("../assets/day-5.gif");
+            let _image = egui::include_image!("../assets/day-5.gif"); // rust stfu about this
 
             egui::Grid::new("GRIDDDD").striped(true).show(ui, |ui| {
                 ui.label("Monday");
@@ -75,7 +291,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                     "{} 'Day {}' cats\n[{}]",
                                     app.cats[i],
                                     i + 1,
-                                    format(app.cat_multipliers[i])
+                                    format(app, app.cat_multipliers[i])
                                 ))
                                 .color(app.colors[0]),
                             )
@@ -85,7 +301,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                 "{} 'Day {}' cats\n[{}]",
                                 app.cats[i],
                                 i + 1,
-                                format(app.cat_multipliers[i])
+                                format(app, app.cat_multipliers[i])
                             ))
                         }
                         .rect
@@ -103,7 +319,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                     ],
                                     egui::Button::new(format!(
                                         "Hire another cat {}$",
-                                        format(app.cat_prices[i])
+                                        format(app, app.cat_prices[i])
                                     )),
                                 )
                             })
