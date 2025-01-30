@@ -1,7 +1,6 @@
 use crate::Game;
 use egui::Ui;
 
-#[derive(Debug)]
 pub struct Upgrade {
     pub text: String,
     pub description: String,
@@ -197,6 +196,19 @@ pub fn get_upgrades() -> Vec<Upgrade> {
             effect: |_x, _y| {
             },
             tier: 1
+        },
+        Upgrade {
+            text: "Increase Chance".to_owned(),
+            description:
+                "Increases the chance for golden berries."
+                    .to_owned(),
+            price: 5.0,
+            price_mult: 3.0,
+            max: 10,
+            count: 0,
+            effect: |_x, _y| {
+            },
+            tier: 2
         },
     ]
 }
