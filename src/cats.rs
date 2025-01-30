@@ -15,6 +15,44 @@ pub struct Cats {
     info_type: CatInfo,
 }
 
+
+fn make_daygif(i: usize) -> egui::Image<'static> {
+    return match i {
+        1 => egui::Image::new(egui::include_image!("../assets/day-1.gif")),
+        2 => egui::Image::new(egui::include_image!("../assets/day-2.gif")),
+        3 => egui::Image::new(egui::include_image!("../assets/day-3.gif")),
+        4 => egui::Image::new(egui::include_image!("../assets/day-4.gif")),
+        5 => egui::Image::new(egui::include_image!("../assets/day-5.gif")),
+        6 => egui::Image::new(egui::include_image!("../assets/day-6.gif")),
+        7 => egui::Image::new(egui::include_image!("../assets/day-7.gif")),
+        8 => egui::Image::new(egui::include_image!("../assets/day-8.gif")),
+        9 => egui::Image::new(egui::include_image!("../assets/day-9.gif")),
+        10 => egui::Image::new(egui::include_image!("../assets/day-10.gif")),
+        11 => egui::Image::new(egui::include_image!("../assets/day-11.gif")),
+        12 => egui::Image::new(egui::include_image!("../assets/day-12.gif")),
+        13 => egui::Image::new(egui::include_image!("../assets/day-13.gif")),
+        14 => egui::Image::new(egui::include_image!("../assets/day-14.gif")),
+        15 => egui::Image::new(egui::include_image!("../assets/day-15.gif")),
+        16 => egui::Image::new(egui::include_image!("../assets/day-16.gif")),
+        17 => egui::Image::new(egui::include_image!("../assets/day-17.gif")),
+        18 => egui::Image::new(egui::include_image!("../assets/day-18.gif")),
+        19 => egui::Image::new(egui::include_image!("../assets/day-19.gif")),
+        20 => egui::Image::new(egui::include_image!("../assets/day-20.gif")),
+        21 => egui::Image::new(egui::include_image!("../assets/day-21.gif")),
+        22 => egui::Image::new(egui::include_image!("../assets/day-22.gif")),
+        23 => egui::Image::new(egui::include_image!("../assets/day-23.gif")),
+        24 => egui::Image::new(egui::include_image!("../assets/day-24.gif")),
+        25 => egui::Image::new(egui::include_image!("../assets/day-25.gif")),
+        26 => egui::Image::new(egui::include_image!("../assets/day-26.gif")),
+        27 => egui::Image::new(egui::include_image!("../assets/day-27.gif")),
+        28 => egui::Image::new(egui::include_image!("../assets/day-28.gif")),
+        29 => egui::Image::new(egui::include_image!("../assets/day-29.gif")),
+        30 => egui::Image::new(egui::include_image!("../assets/day-30.gif")),
+        31 => egui::Image::new(egui::include_image!("../assets/day-31.gif")),
+        _ => egui::Image::new(egui::include_image!("../assets/what.gif")),
+    }; // fuckin egui forcing me to do this shit
+}
+
 pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
     ui.label(format!(
         "You currently have {}$ (+{}$/s)",
@@ -65,61 +103,13 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                     if i % 7 == 0 && i != 0 {
                         ui.end_row();
                     }
-
-                    match i {
-                        1 => ui.image(egui::include_image!("../assets/day-1.gif")),
-                        2 => ui.image(egui::include_image!("../assets/day-2.gif")),
-                        3 => ui.image(egui::include_image!("../assets/day-3.gif")),
-                        4 => ui.image(egui::include_image!("../assets/day-4.gif")),
-                        5 => ui.image(egui::include_image!("../assets/day-5.gif")),
-                        6 => ui.image(egui::include_image!("../assets/day-6.gif")),
-                        7 => ui.image(egui::include_image!("../assets/day-7.gif")),
-                        8 => ui.image(egui::include_image!("../assets/day-8.gif")),
-                        9 => ui.image(egui::include_image!("../assets/day-9.gif")),
-                        10 => ui.image(egui::include_image!("../assets/day-10.gif")),
-                        11 => ui.image(egui::include_image!("../assets/day-11.gif")),
-                        12 => ui.image(egui::include_image!("../assets/day-12.gif")),
-                        13 => ui.image(egui::include_image!("../assets/day-13.gif")),
-                        14 => ui.image(egui::include_image!("../assets/day-14.gif")),
-                        15 => ui.image(egui::include_image!("../assets/day-15.gif")),
-                        16 => ui.image(egui::include_image!("../assets/day-16.gif")),
-                        17 => ui.image(egui::include_image!("../assets/day-17.gif")),
-                        18 => ui.image(egui::include_image!("../assets/day-18.gif")),
-                        19 => ui.image(egui::include_image!("../assets/day-19.gif")),
-                        20 => ui.image(egui::include_image!("../assets/day-20.gif")),
-                        21 => ui.image(egui::include_image!("../assets/day-21.gif")),
-                        22 => ui.image(egui::include_image!("../assets/day-22.gif")),
-                        23 => ui.image(egui::include_image!("../assets/day-23.gif")),
-                        24 => ui.image(egui::include_image!("../assets/day-24.gif")),
-                        25 => ui.image(egui::include_image!("../assets/day-25.gif")),
-                        26 => ui.image(egui::include_image!("../assets/day-26.gif")),
-                        27 => ui.image(egui::include_image!("../assets/day-27.gif")),
-                        28 => ui.image(egui::include_image!("../assets/day-28.gif")),
-                        29 => ui.image(egui::include_image!("../assets/day-29.gif")),
-                        30 => ui.image(egui::include_image!("../assets/day-30.gif")),
-                        31 => ui.image(egui::include_image!("../assets/day-31.gif")),
-                        _ => ui.image(egui::include_image!("../assets/what.gif")),
-                    }; // fuckin egui forcing me to do this shit
-
                     ui.vertical(|ui| {
-                        let mut size = (ctx.screen_rect().width() - 8.0 * 3.0) / 14.0;
-                        
-                        let extra_effective = 
-                            within_day_range(app.day, app.day_width, i as u32) 
-                                && !app.asleep 
-                                && app.current_challenge.id != 0;
+                        //let mut size = (ctx.screen_rect().width() - 8.0 * 3.0) / 14.0;
 
-
-                            size -= ui.label(
-                                RichText::new(format!(
-                                    "{} 'Day {}' cats\n[{}]",
-                                    formatnum(app, app.cats[i]),
-                                    i + 1,
-                                    formatnum(app, app.cat_multipliers[i])
-                                ))
-                                .color(if extra_effective {egui::Color32::from_hex("#FF784F").unwrap()} else {egui::Color32::from_hex("#FF784F").unwrap()}), // i have no idea why this took app.colors when its literally only used once but 
-                            )
-                            .on_hover_text(if extra_effective {"This cat is Extra Effective!"} else {""}).rect.height().min(10.0);
+                        // originals:
+                        // size = (ctx.screen_rect().width() - 8.0 * 3.0) / 14.0;
+                        // height = (ctx.screen_rect().width() - 8.0 * 8.0) / 7.0,
+                        // width size / 2.0 - 3.0
 
                         // size -= if within_day_range(app.day, app.day_width, i as u32) && !app.asleep && app.current_challenge.id != 0
                         // {
@@ -143,14 +133,37 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
 
                         // }.rect.height().min(10.0); // subtracts the size of the cat cell from size
 
+                        let mut size = (ctx.screen_rect().width() - 8.0 * 3.0) / 14.0;
+                        let height = (ctx.screen_rect().width() - 8.0 * 8.0) / 7.0;
+                        let width = size / 2.0 - 3.0;
+
+                        ui.add(make_daygif(i)
+                        .max_height(height)
+                        .max_width(width));
+
+                        let extra_effective = 
+                            within_day_range(app.day, app.day_width, i as u32) 
+                                && !app.asleep 
+                                && app.current_challenge.id != 0;
+                        size -= ui.label(
+                            RichText::new(format!(
+                                "{} 'Day {}' cats\n[{}]",
+                                formatnum(app, app.cats[i]),
+                                i + 1,
+                                formatnum(app, app.cat_multipliers[i])
+                            ))
+                            .color(if extra_effective {egui::Color32::from_hex("#FF784F").unwrap()} else {egui::Color32::from_hex("#888888").unwrap()}), // i have no idea why this took app.colors when its literally only used once but 
+                        )
+                        .on_hover_text(if extra_effective {"This cat is Extra Effective!"} else {""}).rect.height().min(10.0);
+
                         if ui
                             .add_enabled_ui(app.cat_prices[i] <= app.currencies[0], |ui| {
                                 ui.add_sized(
                                     [
                                         //(ctx.screen_rect().width() - 8.0 * 8.0) / 7.0,
                                         //size / 2.0 - 3.0,
-                                        (ctx.screen_rect().width() * 0.95) / 7.0,
-                                        (size / 3.0),
+                                        height,
+                                        width
                                     ],
                                     egui::Button::new(format!(
                                         "Hire another cat {}$",
@@ -183,8 +196,8 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                     |ui| {
                                         ui.add_sized(
                                             [
-                                                (ctx.screen_rect().width() - 8.0 * 8.0) / 7.0,
-                                                size / 2.0 - 3.0,
+                                                height,
+                                                width
                                             ],
                                             egui::Button::new(format!(
                                                 "Feed cat {} strawberry",
@@ -202,6 +215,8 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                                 app.cat_strawberry_prices[i] += 1;
                             }
                         }
+
+
                     });
                 }
                 // ui.set_min_height((ctx.screen_rect().width() - 8.0 * 8.0) / 7.0);

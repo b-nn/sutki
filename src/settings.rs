@@ -82,6 +82,8 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         }
     );
 
+    ui.add(egui::Checkbox::new(&mut app.uwumode, "uwutext mode"));
+
     if ui.button("Export save to clipboard").clicked() {
         let t = save_game(app);
 
