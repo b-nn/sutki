@@ -1,4 +1,5 @@
 use crate::change_status;
+use crate::format::formatnum;
 use crate::get_upgrades;
 use crate::within_day_range;
 use crate::Game;
@@ -198,30 +199,112 @@ pub fn get_challenges() -> Vec<Challenge> {
     Challenge {
             id: 3,
             tier: 0,
-            description: "Buying a cat multiplies its output by 0.9x\nBoost: Every 10th cat purchase gives a 1.1x boost to itself.".to_owned(),
+            description: "Buying a cat multiplies its output by 0.9x\nBoost: Every 10th cat purchase gives a boost to itself.\nSelf-boost scales by +0.05x every additional time you beat this challenge (max 1.2x)".to_owned(),
             count: 0,
-            max: 1,
-            goal: 9999999.0,
+            max: 4,
+            goal: 2e12,
             effect: |app, _y| {
-                change_status(log::Level::Info, "This challenge is not implemented yet!", &mut app.status, &mut app.status_time);
+                app.cat_multipliers = [1.0; 31];
+                app.cat_prices = [1.0; 31];
+                let mut cps = 0.0;
+                for i in 0..app.upgrades.len() {
+                    if app.upgrades[i].count > 0 {
+                        (app.upgrades[i].effect)(app, app.upgrades[i].count);
+                    }
+                }
+                for i in 0..app.challenges.len() {
+                    if app.challenges[i].count > 0 {
+                        (app.challenges[i].boost)(app, app.challenges[i].count);
+                    }
+                }
+
+                for i in 0..app.cats.len() {
+                    app.cat_prices[i] = if app.asleep {
+                        1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    } else {
+                        1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    };
+                    if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
+                        app.cat_multipliers[i] *= 1.5;
+                        app.cat_times[i] += app.dt;
+                    } else {
+                        app.cat_times[i] = -0.00001;
+                    }
+                    app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
+                    app.cat_multipliers[i] *= 0.9f64.powf(app.cats[i]);
+                }
+
+                cps += app
+                    .cats
+                    .iter()
+                    .zip(app.cat_multipliers.iter())
+                    .map(|(x, y)| x * y)
+                    .sum::<f64>();
+                app.currencies[0] += cps * app.dt;
+                app.cps = cps;
             },
-            boost: |_x, _y| {
+            boost: |app, y| {
+                for i in 0..app.cats.len() {
+                    app.cat_multipliers[i] *= (y as f64 * 0.05_f64 + 1.0_f64).powf((app.cats[i] / 10.0).floor());
+                }
+                app.challenges[3].goal = 2e12 * 5.0_f64.powi(y as i32);
             },
             run_once: |_x, _y| {}
         },
     Challenge {
             id: 4,
             tier: 1,
-            description: "this is a test.".to_owned(),
+            description: "Disables strawberries. \n[Warning!, ALL 'Tier 1' Challenges reset strawberries and strawberry upgrades!]\nBoost: Gain 1 golden strawberry.".to_owned(),
             count: 0,
             max: 1,
-            goal: -3.0,
+            goal: 35.0,
             effect: |app, _y| {
-                change_status(log::Level::Info, "This challenge is not implemented yet!", &mut app.status, &mut app.status_time);
+                app.cat_multipliers = [1.0; 31];
+                app.cat_prices = [1.0; 31];
+                let mut cps = 0.0;
+                for i in 0..app.upgrades.len() {
+                    if app.upgrades[i].tier == 1 {
+                        continue;
+                    }
+                    if app.upgrades[i].count > 0 {
+                        (app.upgrades[i].effect)(app, app.upgrades[i].count);
+                    }
+                }
+                for i in 0..app.challenges.len() {
+                    if app.challenges[i].count > 0 {
+                        (app.challenges[i].boost)(app, app.challenges[i].count);
+                    }
+                }
+
+                for i in 0..app.cats.len() {
+                    app.cat_prices[i] = if app.asleep {
+                        1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    } else {
+                        1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
+                    };
+                    if within_day_range(app.day, app.day_width, i as u32) && !app.asleep {
+                        app.cat_multipliers[i] *= 1.5;
+                        app.cat_times[i] += app.dt;
+                    } else {
+                        app.cat_times[i] = -0.00001;
+                    }
+                }
+
+                cps += app
+                    .cats
+                    .iter()
+                    .zip(app.cat_multipliers.iter())
+                    .map(|(x, y)| x * y)
+                    .sum::<f64>();
+                app.currencies[0] += cps * app.dt;
+                app.cps = cps;
             },
             boost: |_x, _y| {
             },
-            run_once: |_x, _y| {}
+            run_once: |x, _y| {
+                x.currencies[2] += 1.0;
+                x.unlocked_tiers[2] = true;
+            }
         }
     ]
 }
@@ -248,6 +331,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
     {
         if app.currencies[app.current_challenge.tier] > app.current_challenge.goal {
             app.challenges[app.current_challenge.id].count += 1;
+            (app.challenges[app.current_challenge.id].run_once)(app, app.current_challenge.count)
         }
         app.in_challenge = false;
         app.current_challenge = Challenge::default();
@@ -260,7 +344,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
                 "Challenge #{:02} [Tier {}] ({}{}) [{}/{}] \n{}",
                 challenge.id,
                 challenge.tier,
-                challenge.goal,
+                formatnum(&app.notation_format, challenge.goal),
                 app.currency_symbols[challenge.tier],
                 challenge.count,
                 challenge.max,
@@ -274,7 +358,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             app.cat_prices = [1.0; 31];
             app.cats = [0.0; 31];
             for i in 0..app.upgrades.len() {
-                if app.upgrades[i].tier < 1 {
+                if app.upgrades[i].tier <= challenge.tier {
                     let mut t = get_upgrades();
                     app.upgrades[i] = t.remove(i);
                 }
@@ -287,6 +371,12 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             app.cat_price_5_multiplier = [0.0; 31];
             app.in_challenge = true;
             app.current_challenge = challenge.clone();
+            if challenge.tier < 1 {
+                continue;
+            }
+            app.currencies[1] = 0.0;
+            app.automation_unlocked = false;
+            app.automation_enabled = false;
         };
     }
 }

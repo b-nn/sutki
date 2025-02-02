@@ -28,6 +28,13 @@ fn update_base(app: &mut Game, cats: [f64; 31]) -> f64 {
         app.cat_multipliers[i] += 1.036_f64.powi(31 - i as i32);
         app.cat_multipliers[i] += 1.036_f64.powi(i as i32);
         app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
+        if app.current_challenge.id == 3 {
+            app.cat_multipliers[i] *= 0.9f64.powf(app.cats[i]);
+        }
+        if app.challenges[3].count > 1 {
+            app.cat_multipliers[i] *= (app.challenges[3].count as f64 * 0.05_f64 + 1.0_f64)
+                .powf((app.cats[i] / 10.0).floor());
+        }
         if app.asleep {
             continue;
         }
@@ -50,7 +57,7 @@ fn update_base(app: &mut Game, cats: [f64; 31]) -> f64 {
 fn get_money_gain(app: &mut Game) {
     let base = update_base(app, app.cats);
     for i in 0..app.money_gain_per_cat.len() {
-        app.money_gain_per_cat[i] = (update_base(
+        app.money_gain_per_cat[i] = update_base(
             app,
             app.cats
                 .iter()
@@ -59,8 +66,7 @@ fn get_money_gain(app: &mut Game) {
                 .collect::<Vec<f64>>()
                 .try_into()
                 .unwrap(),
-        ) - base)
-            * 100000.0;
+        ) - base;
     }
 }
 
@@ -100,7 +106,7 @@ pub fn buy_best_cat(app: &mut Game) -> bool {
                     index = i;
                 }
             }
-            if app.cat_prices[index] < app.currencies[0] {
+            if app.cat_prices[index] < app.currencies[0] && max > 0.0 {
                 buy_cat(app, index);
                 return true;
             }
@@ -119,8 +125,9 @@ pub fn buy_best_cat(app: &mut Game) -> bool {
                     index = i;
                 }
             }
-            if app.cat_prices[index] <= app.currencies[0] {
+            if app.cat_prices[index] <= app.currencies[0] && app.money_gain_per_cat[index] > 0.0 {
                 buy_cat(app, index);
+                println!("{}", app.money_gain_per_cat[index]);
                 return true;
             }
         }
@@ -174,16 +181,15 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             "Enable Automation"
         },
     );
+    let lower_bound = (0.1 - (app.upgrades[11].count as f64 * 0.01)).max(0.001);
     ui.add(
-        egui::Slider::new(
-            &mut app.automation_interval,
-            (0.1 - (app.upgrades[11].count as f64 * 0.01))..=1.0,
-        )
-        .text(if 0.1 - (app.upgrades[11].count as f64 * 0.01) == 0.0 {
-            "Interval [MAX]"
-        } else {
-            "Interval"
-        }),
+        egui::Slider::new(&mut app.automation_interval, lower_bound..=1.0).text(
+            if 0.1 - (app.upgrades[11].count as f64 * 0.01) == 0.0 {
+                "Interval [MAX]"
+            } else {
+                "Interval"
+            },
+        ),
     );
     egui::ComboBox::from_label("Automation Mode")
         .selected_text(format!("{:?}", app.automation_mode))

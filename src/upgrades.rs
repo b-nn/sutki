@@ -1,3 +1,4 @@
+use crate::format::formatnum;
 use crate::Game;
 use egui::Ui;
 
@@ -212,9 +213,9 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
                 price <= app.currencies[app.upgrades[i].tier]
                     && app.upgrades[i].count < app.upgrades[i].max,
                 egui::Button::new(format!(
-                    "{} {:.2}{} [{}/{}]",
+                    "{} {}{} [{}/{}]",
                     app.upgrades[i].text,
-                    price,
+                    formatnum(&app.notation_format, price),
                     app.currency_symbols[app.upgrades[i].tier],
                     app.upgrades[i].count,
                     app.upgrades[i].max

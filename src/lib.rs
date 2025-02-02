@@ -312,10 +312,10 @@ pub fn load_game(t: SaveStruct) -> Game {
             if &j.0 != &i.description {
                 continue;
             }
-            if &j.1 != &i.max {
+            if &j.2 != &i.max {
                 continue;
             }
-            i.count = j.2;
+            i.count = j.1;
             break;
         }
         final_challenges.push(i);
@@ -370,60 +370,60 @@ impl Game {
             .unwrap()
             .insert(0, "Jetbrains".to_owned());
 
-        cc.egui_ctx.set_style_of(
-            egui::Theme::Dark,
-            Style {
-                visuals: egui::Visuals {
-                    dark_mode: true,
-                    override_text_color: None,
-                    widgets: egui::style::Widgets {
-                        noninteractive: egui::style::WidgetVisuals {
-                            bg_fill: COLORS[1],
-                            weak_bg_fill: COLORS[1],
-                            bg_stroke: egui::Stroke {
-                                color: COLORS[1],
-                                ..Default::default()
-                            },
-                            fg_stroke: egui::Stroke {
-                                color: COLORS[0],
-                                ..Default::default()
-                            },
-                            expansion: 0.0,
-                            rounding: egui::Rounding::same(2.0),
-                        },
-                        ..Default::default()
-                    },
-                    ..Default::default() // selection: (),
-                                         // hyperlink_color: (),
-                                         // faint_bg_color: (),
-                                         // extreme_bg_color: (),
-                                         // code_bg_color: (),
-                                         // warn_fg_color: (),
-                                         // error_fg_color: (),
-                                         // window_rounding: (),
-                                         // window_shadow: (),
-                                         // window_fill: (),
-                                         // window_stroke: (),
-                                         // window_highlight_topmost: (),
-                                         // menu_rounding: (),
-                                         // panel_fill: (),
-                                         // popup_shadow: (),
-                                         // resize_corner_size: (),
-                                         // text_cursor: (),
-                                         // clip_rect_margin: (),
-                                         // button_frame: (),
-                                         // collapsing_header_frame: (),
-                                         // indent_has_left_vline: (),
-                                         // striped: (),
-                                         // slider_trailing_fill: (),
-                                         // handle_shape: (),
-                                         // interact_cursor: (),
-                                         // image_loading_spinners: (),
-                                         // numeric_color_space: (),
-                },
-                ..Default::default()
-            },
-        );
+        // cc.egui_ctx.set_style_of(
+        //     egui::Theme::Dark,
+        //     Style {
+        //         visuals: egui::Visuals {
+        //             dark_mode: true,
+        //             override_text_color: None,
+        //             widgets: egui::style::Widgets {
+        //                 noninteractive: egui::style::WidgetVisuals {
+        //                     bg_fill: COLORS[1],
+        //                     weak_bg_fill: COLORS[1],
+        //                     bg_stroke: egui::Stroke {
+        //                         color: COLORS[1],
+        //                         ..Default::default()
+        //                     },
+        //                     fg_stroke: egui::Stroke {
+        //                         color: COLORS[0],
+        //                         ..Default::default()
+        //                     },
+        //                     expansion: 0.0,
+        //                     rounding: egui::Rounding::same(2.0),
+        //                 },
+        //                 ..Default::default()
+        //             },
+        //             selection: (),
+        //             hyperlink_color: (),
+        //             faint_bg_color: (),
+        //             extreme_bg_color: (),
+        //             code_bg_color: (),
+        //             warn_fg_color: (),
+        //             error_fg_color: (),
+        //             window_rounding: (),
+        //             window_shadow: (),
+        //             window_fill: (),
+        //             window_stroke: (),
+        //             window_highlight_topmost: (),
+        //             menu_rounding: (),
+        //             panel_fill: (),
+        //             popup_shadow: (),
+        //             resize_corner_size: (),
+        //             text_cursor: (),
+        //             clip_rect_margin: (),
+        //             button_frame: (),
+        //             collapsing_header_frame: (),
+        //             indent_has_left_vline: (),
+        //             striped: (),
+        //             slider_trailing_fill: (),
+        //             handle_shape: (),
+        //             interact_cursor: (),
+        //             image_loading_spinners: (),
+        //             numeric_color_space: (),
+        //         },
+        //         ..Default::default()
+        //     },
+        // );
         cc.egui_ctx.set_fonts(fonts);
 
         if let Some(storage) = cc.storage {
@@ -582,21 +582,21 @@ impl eframe::App for Game {
                     if ui.button("Reset").clicked() {
                         *self = Game::default();
                     }
-                    if ui.button("money (for testing purposes)").clicked() {
-                        self.currencies[0] += 10000.0;
-                    }
-                    if ui.button("more money (for testing purposes)").clicked() {
-                        self.currencies[0] += 1e15;
-                    }
-                    if ui.button("strawberries (for testing purposes)").clicked() {
-                        self.currencies[1] += 100.0;
-                    }
-                    if ui
-                        .button("more strawberries (for testing purposes)")
-                        .clicked()
-                    {
-                        self.currencies[1] += 1e9;
-                    }
+                    // if ui.button("money (for testing purposes)").clicked() {
+                    //     self.currencies[0] += 10000.0;
+                    // }
+                    // if ui.button("more money (for testing purposes)").clicked() {
+                    //     self.currencies[0] += 1e15;
+                    // }
+                    // if ui.button("strawberries (for testing purposes)").clicked() {
+                    //     self.currencies[1] += 100.0;
+                    // }
+                    // if ui
+                    //     .button("more strawberries (for testing purposes)")
+                    //     .clicked()
+                    // {
+                    //     self.currencies[1] += 1e9;
+                    // }
                 });
                 ui.add_space(16.0);
                 egui::widgets::global_theme_preference_buttons(ui);
@@ -628,8 +628,8 @@ impl eframe::App for Game {
                 keep_looping = automation::buy_best_cat(self);
             }
         }
+        println!("{}", self.automation_delay);
         self.automation_delay %= self.automation_interval;
-        print!("{}", self.automation_delay);
 
         if !self.in_challenge {
             update(self);
@@ -654,7 +654,6 @@ impl eframe::App for Game {
         self.real_time = Local::now();
         self.automation_delay += self.dt;
         self.title_delay += self.dt;
-        println!("fps: {}", 1.0 / self.dt);
         ctx.set_zoom_factor(self.zoom);
         ctx.request_repaint();
     }
