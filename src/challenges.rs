@@ -15,6 +15,7 @@ pub struct Challenge {
     pub max: i64,
     pub effect: fn(&mut Game, i64),
     pub boost: fn(&mut Game, i64),
+    pub run_once: fn(&mut Game, i64),
 }
 
 impl Default for Challenge {
@@ -31,6 +32,10 @@ impl Default for Challenge {
                 println!("something has gone very wrong, you are never meant to run this, please file a bug report!");
             },
             boost: |_x, _y| loop {
+                log!(log::Level::Error, "Something has gone very wrong, you are never meant to run this, please file a bug report!");
+                println!("something has gone very wrong, you are never meant to run this, please file a bug report!");
+            },
+            run_once: |_x, _y| loop {
                 log!(log::Level::Error, "Something has gone very wrong, you are never meant to run this, please file a bug report!");
                 println!("something has gone very wrong, you are never meant to run this, please file a bug report!");
             },
@@ -85,8 +90,8 @@ pub fn get_challenges() -> Vec<Challenge> {
                     3_f64.powi(y as i32);
             }
             x.challenges[0].goal = (x.challenges[0].count + 1) as f64 * 75000.0;
-
         },
+        run_once: |_x, _y| {}
     },
     Challenge {
             id: 1,
@@ -137,6 +142,7 @@ pub fn get_challenges() -> Vec<Challenge> {
             },
             boost: |_x, _y| {
             },
+            run_once: |_x, _y| {}
         },
     Challenge {
             id: 2,
@@ -187,6 +193,7 @@ pub fn get_challenges() -> Vec<Challenge> {
             },
             boost: |_x, _y| {
             },
+            run_once: |_x, _y| {}
         },
     Challenge {
             id: 3,
@@ -200,6 +207,7 @@ pub fn get_challenges() -> Vec<Challenge> {
             },
             boost: |_x, _y| {
             },
+            run_once: |_x, _y| {}
         },
     Challenge {
             id: 4,
@@ -213,6 +221,7 @@ pub fn get_challenges() -> Vec<Challenge> {
             },
             boost: |_x, _y| {
             },
+            run_once: |_x, _y| {}
         }
     ]
 }

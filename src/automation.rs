@@ -11,10 +11,10 @@ pub enum AutomationMode {
 fn get_strawberries(money: f64, cats: [f64; 31], app: &mut Game) -> f64 {
     (cats.iter().sum::<f64>() / 30.0 - 1.0)
         * if app.challenges[2].count != 0 {
-            if money.log10() < 1.0 {
-                1.5
+            if money.ln() < 1.0 {
+                1.0
             } else {
-                1.5_f64.powf(money.log10())
+                money.ln()
             }
         } else {
             1.0
@@ -76,9 +76,21 @@ fn buy_cat(app: &mut Game, index: usize) {
     app.cats[index] += 1.0;
 }
 
-pub fn buy_best_cat(app: &mut Game) {
+fn update_cat_prices(app: &mut Game) {
+    app.cat_prices = [1.0; 31];
+    for i in 0..app.cats.len() {
+        app.cat_prices[i] = if app.asleep {
+            1.45_f64.powf(app.cats[i]) * 2.1_f64.powi(app.cat_price_5_multiplier[i] as i32)
+        } else {
+            1.5_f64.powf(app.cats[i]) * 5_f64.powi(app.cat_price_5_multiplier[i] as i32)
+        };
+    }
+}
+
+pub fn buy_best_cat(app: &mut Game) -> bool {
     let mut index = 0;
     get_money_gain(app);
+    update_cat_prices(app);
     match app.automation_mode {
         AutomationMode::MostMoney => {
             let mut max = 0.0;
@@ -90,6 +102,7 @@ pub fn buy_best_cat(app: &mut Game) {
             }
             if app.cat_prices[index] < app.currencies[0] {
                 buy_cat(app, index);
+                return true;
             }
         }
         AutomationMode::Efficiency => {
@@ -108,6 +121,7 @@ pub fn buy_best_cat(app: &mut Game) {
             }
             if app.cat_prices[index] <= app.currencies[0] {
                 buy_cat(app, index);
+                return true;
             }
         }
         AutomationMode::MostStrawberries => {
@@ -137,9 +151,11 @@ pub fn buy_best_cat(app: &mut Game) {
             }
             if app.cat_prices[index] < app.currencies[0] && max > 0.0 {
                 buy_cat(app, index);
+                return true;
             }
         }
     }
+    false
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui) {

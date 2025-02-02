@@ -564,11 +564,14 @@ impl eframe::App for Game {
         self.day = (Utc::now() + Duration::seconds(self.day_offset as i64)).day0();
 
         if self.automation_enabled {
-            if self.automation_delay > self.automation_interval {
-                self.automation_delay = 0.0;
-                automation::buy_best_cat(self);
+            let mut keep_looping = true;
+            while self.automation_delay > self.automation_interval && keep_looping {
+                self.automation_delay -= self.automation_interval;
+                keep_looping = automation::buy_best_cat(self);
             }
         }
+        self.automation_delay %= self.automation_interval;
+        print!("{}", self.automation_delay);
 
         if !self.in_challenge {
             update(self);
