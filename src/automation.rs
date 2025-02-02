@@ -126,7 +126,6 @@ pub fn buy_best_cat(app: &mut Game) {
                     app,
                 ) - base;
             }
-            println!("{:?}", gains);
             let mut max = 0.0;
             let mut max_price = f64::MAX;
             for i in 0..gains.len() {

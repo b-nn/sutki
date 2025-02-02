@@ -2,14 +2,17 @@ use chrono::{self, DateTime, Datelike, Duration, Local, Timelike, Utc};
 use eframe::egui;
 use egui::FontDefinitions;
 use log::{log, Level};
-mod upgrades;
-use upgrades::{get_upgrades, Upgrade};
-mod cats;
+
 mod challenges;
+mod format;
+mod upgrades;
 use challenges::{get_challenges, Challenge};
+use upgrades::{get_upgrades, Upgrade};
 mod automation;
+mod cats;
 mod prestige;
 mod settings;
+use format::Notations;
 
 pub trait Module {
     fn update(&self, app: &mut Game, ui: &mut egui::Ui);
@@ -55,15 +58,15 @@ pub struct Game {
     cat_price_multipliers: [f64; 31],
     cat_price_5_multiplier: [f64; 31],
     cat_times: [f64; 31],
-    currencies: [f64; 2],
-    colors: [egui::Color32; 1],
+    currencies: [f64; 3],
+    //colors: [egui::Color32; 1],
     upgrades: Vec<Upgrade>,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
-    unlocked_tiers: [bool; 2],
+    unlocked_tiers: [bool; 3],
     status: String,
     status_time: DateTime<Local>,
-    currency_symbols: [char; 2],
+    currency_symbols: [char; 3],
     asleep: bool,
     cps: f64,
     state: Tab,
@@ -82,6 +85,8 @@ pub struct Game {
     title_delay: f64,
     title_index: usize,
     zoom: f32,
+    notation_format: Notations,
+    uwumode: bool,
 }
 
 fn change_status(
@@ -104,11 +109,11 @@ pub struct SaveStruct {
     //  NOTE: Resets every frame, make sure to update every frame even when implementing static multipliers
     cat_prices: [f64; 31],
     cat_times: [f64; 31],
-    currencies: [f64; 2],
+    currencies: [f64; 3],
     upgrades: Vec<(String, i64, i64)>,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
-    unlocked_tiers: [bool; 2],
+    unlocked_tiers: [bool; 3],
     cat_price_5_multiplier: [f64; 31],
     modules: [[bool; MODULES.len()]; TABS.len()],
     challenges: Vec<(String, i64, i64)>,
@@ -118,6 +123,8 @@ pub struct SaveStruct {
     automation_enabled: bool,
     automation_mode: automation::AutomationMode,
     zoom: f32,
+    notation_format: Notations,
+    uwumode: bool,
 }
 
 impl Default for SaveStruct {
@@ -127,12 +134,12 @@ impl Default for SaveStruct {
             cat_prices: [1.0; 31],
             day_offset: 1.0,
             day_width: 0,
-            currencies: [1.0, 0.0],
+            currencies: [1.0, 0.0, 0.0],
             cat_times: [0.0; 31],
             upgrades: vec![],
             cat_strawberries: [0; 31],
             cat_strawberry_prices: [1; 31],
-            unlocked_tiers: [true, false],
+            unlocked_tiers: [true, false, false],
             cat_price_5_multiplier: [0.0; 31],
             modules: [
                 [true, false, false, true, false, false],
@@ -148,6 +155,8 @@ impl Default for SaveStruct {
             automation_interval: 0.1,
             automation_enabled: false,
             zoom: 1.0,
+            notation_format: Notations::HybridScientific,
+            uwumode: false,
         }
     }
 }
@@ -164,23 +173,24 @@ impl Default for Game {
             day_offset: 1.0,
             day_width: 0,
             day: Local::now().day0(),
-            currencies: [1.0, 0.0],
+            currencies: [1.0, 0.0, 0.0],
             cat_times: [0.0; 31],
-            colors: [egui::Color32::from_hex("#FF784F").unwrap()],
-            upgrades: upgrades::get_upgrades(),
+            //colors: [egui::Color32::from_hex("#FF784F").unwrap()],
+            upgrades: get_upgrades(),
             cat_strawberries: [0; 31],
             cat_strawberry_prices: [1; 31],
-            unlocked_tiers: [true, false],
+            unlocked_tiers: [true, false, false],
             status: "Opened game".to_owned(),
             status_time: Local::now(),
-            currency_symbols: ['$', '🍓'],
+            currency_symbols: ['$', '🍓', '🥇'],
             cat_price_5_multiplier: [0.0; 31],
             asleep: false,
             cps: 0.0,
             date: Utc::now(),
             state: Tab::Cats,
             modules: [
-                [true, false, false, true, false, false],
+                // Cats, Upgrades, Settings, Prestige, Challenges, Automation
+                [true, true, false, true, false, false],
                 [false, true, false, true, false, false],
                 [false, false, true, false, false, false],
                 [false, false, false, false, true, false],
@@ -233,6 +243,8 @@ impl Default for Game {
             title_delay: 0.0,
             title_index: (Utc::now().second() % 31) as usize, // should always be titles.count
             zoom: 1.0,
+            notation_format: Notations::HybridScientific,
+            uwumode: false,
         }
     }
 }
@@ -266,6 +278,8 @@ pub fn save_game(t: &mut Game) -> SaveStruct {
         automation_enabled: t.automation_enabled,
         automation_mode: t.automation_mode.clone(),
         zoom: t.zoom,
+        notation_format: t.notation_format.clone(),
+        uwumode: t.uwumode,
     }
 }
 
@@ -363,32 +377,6 @@ impl Game {
     }
 }
 
-fn update_base(app: &mut Game, cats: [f64; 31]) -> f64 {
-    app.cat_multipliers = [1.0; 31];
-    app.cat_prices = [1.0; 31];
-    let mut cps = 0.0;
-    for i in 0..app.cat_multipliers.len() {
-        app.cat_multipliers[i] += 1.036_f64.powi(31 - i as i32);
-        app.cat_multipliers[i] += 1.036_f64.powi(i as i32);
-        app.cat_multipliers[i] *= 1.5f64.powi(app.cat_strawberries[i] as i32);
-        if app.asleep {
-            continue;
-        }
-        app.cat_multipliers[i] *= cats
-            .iter()
-            .enumerate()
-            .map(|(x, y)| if x == i { 0.0 } else { *y * 0.01 })
-            .sum::<f64>()
-            + 1.0;
-    }
-
-    cps += cats
-        .iter()
-        .zip(app.cat_multipliers.iter())
-        .map(|(x, y)| x * y)
-        .sum::<f64>();
-    cps
-}
 // #[cfg(not(target_arch = "wasm32"))]
 // fn set_title(ctx: &egui::Context, t: String) {
 //     ctx.send_viewport_cmd(egui::ViewportCommand::Title(t));
@@ -497,7 +485,7 @@ impl eframe::App for Game {
         );
     }
 
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.zoom = ctx.zoom_factor();
         let mut t = "sutki // ".to_owned();
         t.push_str(match self.title_index {
@@ -539,8 +527,17 @@ impl eframe::App for Game {
                     if ui.button("money (for testing purposes)").clicked() {
                         self.currencies[0] += 10000.0;
                     }
+                    if ui.button("more money (for testing purposes)").clicked() {
+                        self.currencies[0] += 1e15;
+                    }
                     if ui.button("strawberries (for testing purposes)").clicked() {
                         self.currencies[1] += 100.0;
+                    }
+                    if ui
+                        .button("more strawberries (for testing purposes)")
+                        .clicked()
+                    {
+                        self.currencies[1] += 1e9;
                     }
                 });
                 ui.add_space(16.0);

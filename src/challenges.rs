@@ -8,9 +8,9 @@ use log::log;
 #[derive(Clone, Debug)]
 pub struct Challenge {
     pub id: usize,
+    pub tier: usize,
     pub description: String,
     pub goal: f64,
-    pub currency: usize,
     pub count: i64,
     pub max: i64,
     pub effect: fn(&mut Game, i64),
@@ -21,9 +21,9 @@ impl Default for Challenge {
     fn default() -> Self {
         Challenge {
             id: 1000000,
+            tier: 0,
             description: "".to_owned(),
             goal: 0.0,
-            currency: 0,
             count: 0,
             max: 0,
             effect: |_x, _y| loop {
@@ -41,11 +41,11 @@ impl Default for Challenge {
 pub fn get_challenges() -> Vec<Challenge> {
     vec![Challenge {
         id: 0,
+        tier: 0,
         description: "Disables the 'Extra Effective!' boost in challenge. \nBoost: Gives the cat which was most recently boosted an additional boost.".to_owned(),
         count: 0,
         max: 1,
         goal: 75000.0,
-        currency: 0,
         effect: |app, _y| {
             app.cat_multipliers = [1.0; 31];
             app.cat_prices = [1.0; 31];
@@ -90,11 +90,11 @@ pub fn get_challenges() -> Vec<Challenge> {
     },
     Challenge {
             id: 1,
+            tier: 0,
             description: "Makes the 'Extra Effective!' divide instead of multiply, \ndisables sleeping, and automatically maxes out both Spin upgrades. Challenge 0's boost is disabled. \nBoost: Makes Like Hot Cakes' effect fall off slower.".to_owned(),
             count: 0,
             max: 1,
             goal: 5000.0,
-            currency: 0,
             effect: |app, _y| {
                 app.cat_multipliers = [1.0; 31];
                 app.cat_prices = [1.0; 31];
@@ -140,11 +140,11 @@ pub fn get_challenges() -> Vec<Challenge> {
         },
     Challenge {
             id: 2,
+            tier: 0,
             description: "Money exponentially slows down production.\nBoost: Money logarithmically multiplies strawberry production.".to_owned(),
             count: 0,
             max: 1,
             goal: 61000.0,
-            currency: 0,
             effect: |app, _y| {
                 app.cat_multipliers = [1.0; 31];
                 app.cat_prices = [1.0; 31];
@@ -190,11 +190,24 @@ pub fn get_challenges() -> Vec<Challenge> {
         },
     Challenge {
             id: 3,
+            tier: 0,
             description: "Buying a cat multiplies its output by 0.9x\nBoost: Every 10th cat purchase gives a 1.1x boost to itself.".to_owned(),
             count: 0,
             max: 1,
             goal: 9999999.0,
-            currency: 0,
+            effect: |app, _y| {
+                change_status(log::Level::Info, "This challenge is not implemented yet!", &mut app.status, &mut app.status_time);
+            },
+            boost: |_x, _y| {
+            },
+        },
+    Challenge {
+            id: 4,
+            tier: 1,
+            description: "this is a test.".to_owned(),
+            count: 0,
+            max: 1,
+            goal: -3.0,
             effect: |app, _y| {
                 change_status(log::Level::Info, "This challenge is not implemented yet!", &mut app.status, &mut app.status_time);
             },
@@ -213,7 +226,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             } else {
                 format!(
                     "{} {}",
-                    if app.currencies[app.current_challenge.currency] > app.current_challenge.goal {
+                    if app.currencies[app.current_challenge.tier] > app.current_challenge.goal {
                         "Complete Challenge".to_owned()
                     } else {
                         "Exit Challenge".to_owned()
@@ -224,7 +237,7 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         )
         .clicked()
     {
-        if app.currencies[app.current_challenge.currency] > app.current_challenge.goal {
+        if app.currencies[app.current_challenge.tier] > app.current_challenge.goal {
             app.challenges[app.current_challenge.id].count += 1;
         }
         app.in_challenge = false;
@@ -235,10 +248,11 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
         let challenge = &app.challenges[i];
         if ui
             .button(format!(
-                "Challenge #{:02} ({}{}) [{}/{}] \n{}",
+                "Challenge #{:02} [Tier {}] ({}{}) [{}/{}] \n{}",
                 challenge.id,
+                challenge.tier,
                 challenge.goal,
-                app.currency_symbols[challenge.currency],
+                app.currency_symbols[challenge.tier],
                 challenge.count,
                 challenge.max,
                 challenge.description,

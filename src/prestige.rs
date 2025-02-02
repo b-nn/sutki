@@ -1,5 +1,5 @@
-use crate::get_upgrades;
 use crate::Game;
+use crate::{format::formatnum, get_upgrades};
 use egui::Ui;
 
 fn get_strawberry_amount(app: &mut Game) -> f64 {
@@ -13,6 +13,8 @@ fn get_strawberry_amount(app: &mut Game) -> f64 {
         } else {
             1.0
         }
+    // there's no reason to put a .max() here, letting it be negative just gives the player an
+    // indicator for how long they have until they can prestige for strawberries
 }
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
@@ -20,7 +22,10 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
     if ui
         .add_enabled(
             app.cats.iter().sum::<f64>() >= 60.0,
-            egui::Button::new(format!("Prestige for {:.2} strawberries", strawberries)),
+            egui::Button::new(format!(
+                "Prestige for {} strawberries",
+                formatnum(&app.notation_format, strawberries)
+            )),
         )
         .on_hover_text("Gives strawberries based off how many cats you have".to_owned())
         .clicked()
