@@ -628,7 +628,6 @@ impl eframe::App for Game {
                 keep_looping = automation::buy_best_cat(self);
             }
         }
-        println!("{}", self.automation_delay);
         self.automation_delay %= self.automation_interval;
 
         if !self.in_challenge {

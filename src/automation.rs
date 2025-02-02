@@ -127,7 +127,6 @@ pub fn buy_best_cat(app: &mut Game) -> bool {
             }
             if app.cat_prices[index] <= app.currencies[0] && app.money_gain_per_cat[index] > 0.0 {
                 buy_cat(app, index);
-                println!("{}", app.money_gain_per_cat[index]);
                 return true;
             }
         }
