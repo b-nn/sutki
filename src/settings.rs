@@ -1,11 +1,9 @@
-use crate::change_status;
-use crate::load_game;
-use crate::save_game;
-use crate::TABS;
-use crate::SaveStruct;
-use crate::Game;
-use crate::MODULES;
+use std::collections::HashMap;
+
+use crate::{change_status, load_game, save_game};
+use crate::{TABS, SaveStruct, Game, MODULES};
 use egui::Ui;
+use crate::Notations;
 
 pub fn update(app: &mut Game, ui: &mut Ui) {
     ui.horizontal(|ui| {
@@ -26,6 +24,65 @@ pub fn update(app: &mut Game, ui: &mut Ui) {
             if index != TABS.len() {ui.separator();};
         }
     });
+
+    // Create a HashMap to map Notations to their display strings
+    let mut notation_map: HashMap<Notations, &str> = HashMap::new();
+
+    // Populate the HashMap with Notation variants and their corresponding strings
+    notation_map.insert(Notations::Scientific, "Scientific");
+    notation_map.insert(Notations::HybridScientific, "Hybrid Scientific");
+    notation_map.insert(Notations::Standard, "Standard");
+    notation_map.insert(Notations::Engineering, "Engineering");
+    notation_map.insert(Notations::None, "None");
+    notation_map.insert(Notations::Binary, "Binary");
+    notation_map.insert(Notations::Hex, "Hex");
+    notation_map.insert(Notations::Logarithm, "Logarithm");
+    notation_map.insert(Notations::Leaf, "Leaf");
+    notation_map.insert(Notations::Emoji, "ｅｍｏｊｉ");
+    notation_map.insert(Notations::Morse, "-- --- .-. ... .");
+    notation_map.insert(Notations::Celeste, "Celeste");
+    notation_map.insert(Notations::Heart, "Heart");
+    notation_map.insert(Notations::Reverse, "Reverse");
+    notation_map.insert(Notations::Blind, "");
+    
+    ui.label("Notation:"); //before you ask, no i cant make a for loop becuase that makes the menu unusable (cycles forever)
+    egui::ComboBox::from_label("Select one!")
+        .selected_text(format!("{}", notation_map.get(&app.notation_format).unwrap()).trim_matches('"'))
+        .show_ui(ui, |ui| {
+            ui.selectable_value(&mut app.notation_format, Notations::Scientific
+                , format!("{}",notation_map.get(&Notations::Scientific).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::HybridScientific
+                , format!("{}",notation_map.get(&Notations::HybridScientific).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Standard
+                , format!("{}",notation_map.get(&Notations::Standard).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Engineering
+                , format!("{}",notation_map.get(&Notations::Engineering).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::None
+                , format!("{}",notation_map.get(&Notations::None).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Binary
+                , format!("{}",notation_map.get(&Notations::Binary).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Hex
+                , format!("{}",notation_map.get(&Notations::Hex).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Logarithm
+                , format!("{}",notation_map.get(&Notations::Logarithm).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Leaf
+                , format!("{}",notation_map.get(&Notations::Leaf).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Emoji
+                , format!("{}",notation_map.get(&Notations::Emoji).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Morse
+                , format!("{}",notation_map.get(&Notations::Morse).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Celeste
+                , format!("{}",notation_map.get(&Notations::Celeste).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Heart
+                , format!("{}",notation_map.get(&Notations::Heart).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Reverse
+                , format!("{}",notation_map.get(&Notations::Reverse).unwrap()));
+            ui.selectable_value(&mut app.notation_format, Notations::Blind
+                , format!("{}",notation_map.get(&Notations::Blind).unwrap()));
+        }
+    );
+
+    ui.add(egui::Checkbox::new(&mut app.uwumode, "uwutext mode"));
 
     if ui.button("Export save to clipboard").clicked() {
         let t = save_game(app);
