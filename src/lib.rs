@@ -1,6 +1,6 @@
 use chrono::{self, DateTime, Datelike, Duration, Local, Timelike, Utc};
 use eframe::egui;
-use egui::FontDefinitions;
+use egui::{FontDefinitions, Style};
 use log::{log, Level};
 
 mod challenges;
@@ -44,6 +44,11 @@ pub const MODULES: [&str; 6] = [
     "Automation",
 ];
 
+pub const COLORS: [egui::Color32; 2] = [
+    egui::Color32::from_rgb(255, 120, 79),
+    egui::Color32::from_rgb(11, 20, 22),
+];
+
 pub struct Game {
     real_time: DateTime<Local>,
     dt: f64,
@@ -59,7 +64,6 @@ pub struct Game {
     cat_price_5_multiplier: [f64; 31],
     cat_times: [f64; 31],
     currencies: [f64; 3],
-    //colors: [egui::Color32; 1],
     upgrades: Vec<Upgrade>,
     cat_strawberries: [i64; 31],
     cat_strawberry_prices: [i64; 31],
@@ -366,6 +370,60 @@ impl Game {
             .unwrap()
             .insert(0, "Jetbrains".to_owned());
 
+        cc.egui_ctx.set_style_of(
+            egui::Theme::Dark,
+            Style {
+                visuals: egui::Visuals {
+                    dark_mode: true,
+                    override_text_color: None,
+                    widgets: egui::style::Widgets {
+                        noninteractive: egui::style::WidgetVisuals {
+                            bg_fill: COLORS[1],
+                            weak_bg_fill: COLORS[1],
+                            bg_stroke: egui::Stroke {
+                                color: COLORS[1],
+                                ..Default::default()
+                            },
+                            fg_stroke: egui::Stroke {
+                                color: COLORS[0],
+                                ..Default::default()
+                            },
+                            expansion: 0.0,
+                            rounding: egui::Rounding::same(2.0),
+                        },
+                        ..Default::default()
+                    },
+                    ..Default::default() // selection: (),
+                                         // hyperlink_color: (),
+                                         // faint_bg_color: (),
+                                         // extreme_bg_color: (),
+                                         // code_bg_color: (),
+                                         // warn_fg_color: (),
+                                         // error_fg_color: (),
+                                         // window_rounding: (),
+                                         // window_shadow: (),
+                                         // window_fill: (),
+                                         // window_stroke: (),
+                                         // window_highlight_topmost: (),
+                                         // menu_rounding: (),
+                                         // panel_fill: (),
+                                         // popup_shadow: (),
+                                         // resize_corner_size: (),
+                                         // text_cursor: (),
+                                         // clip_rect_margin: (),
+                                         // button_frame: (),
+                                         // collapsing_header_frame: (),
+                                         // indent_has_left_vline: (),
+                                         // striped: (),
+                                         // slider_trailing_fill: (),
+                                         // handle_shape: (),
+                                         // interact_cursor: (),
+                                         // image_loading_spinners: (),
+                                         // numeric_color_space: (),
+                },
+                ..Default::default()
+            },
+        );
         cc.egui_ctx.set_fonts(fonts);
 
         if let Some(storage) = cc.storage {
@@ -596,6 +654,7 @@ impl eframe::App for Game {
         self.real_time = Local::now();
         self.automation_delay += self.dt;
         self.title_delay += self.dt;
+        println!("fps: {}", 1.0 / self.dt);
         ctx.set_zoom_factor(self.zoom);
         ctx.request_repaint();
     }
