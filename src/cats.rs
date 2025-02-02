@@ -99,15 +99,15 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                 ui.label("Sunday");
                 ui.end_row();
 
-                let mut x = ctx.screen_rect().width() / 125.0;
-                let mut y = 60.0;
+                let mut x = ctx.screen_rect().width() / 140.0;
+                let mut y = 100.0;
 
                 for day in 0..app.cats.len() { // generate the grid of cats
                     let width = (ctx.screen_rect().width().max(65.0) - 8.0 * 8.0) / 7.0;
                     let height =  (ctx.screen_rect().width().max(109.0) - 8.0 * 3.0) / 28.0 - 3.0;
-                    if day % 7 == 0 && day != 0 { // sunday
-                        y += height * 2.0;
-                        ui.end_row(); // next week
+                    if day % 7 == 0 && day != 0 { // next week
+                        y += 1.0;
+                        ui.end_row();
                     }
                     ui.vertical(|ui| {
                         //let mut size = (ctx.screen_rect().width() - 8.0 * 3.0) / 14.0;
@@ -142,7 +142,7 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                         let _gif_widget = make_daygif(day + 1)
                         .maintain_aspect_ratio(false).fit_to_exact_size(egui::Vec2::new(width, height * 2.0));
 
-                        let gif_rect = Rect::from_min_max(egui::pos2(x, y), egui::pos2(x + width, y + height));
+                        let gif_rect = Rect::from_min_max(egui::pos2(x, y), egui::pos2(x + width, y + height * 2.0));
                         ui.painter().rect(gif_rect, 0.0, egui::Color32::from_black_alpha(50),Stroke::new(1.0,egui::Color32::from_black_alpha(50))); // Optional: add a color for visibility
 
                         let extra_effective = 

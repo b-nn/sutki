@@ -539,14 +539,14 @@ pub fn formatnum(app: &Game, input: f64) -> String {
 }
 
 fn scientific(input: f64) -> String {
-    format!("{:.3e}", input)
+    format!("{:.2e}", input)
 }
 
 fn hybrid_scientific(input: f64) -> String {
     if input < 10000.0 {
-        format!("{:.3}", input)
+        format!("{:.2}", input)
     } else {
-        format!("{:.3e}", input)
+        format!("{:.2e}", input)
     }
 }
 
@@ -580,11 +580,11 @@ fn standard(input: f64) -> String {
 fn engineering(input: f64) -> String {
     let exponent = (input.log10().floor() as i32 / 3) * 3;
     let normalized_base = input / 10f64.powi(exponent);
-    format!("{:.3}e{}", normalized_base, exponent)
+    format!("{:.2}e{}", normalized_base, exponent)
 }
 
 fn none(input: f64) -> String {
-    format!("{:.3}",input)
+    format!("{:.2}",input)
 }
 
 fn binary(input: f64) -> String {
@@ -604,17 +604,17 @@ fn leaf(input: f64) -> String {
 
     // too big man
     if input > 10.0_f64.powf(144.0) {
-        return format!("{:.3e}Z", input - 10.0_f64.powf(144.0));
+        return format!("{:.2e}Z", input - 10.0_f64.powf(144.0));
     }
 
     let exponent = input.log10().floor();
     let closest_exponent: usize = (exponent / 3.0).floor() as usize;
 
     let scaled_number = input / 10_f64.powi((closest_exponent * 3) as i32);
-    let formatted_number = format!("{:.3}", scaled_number);
+    let formatted_number = format!("{:.2}", scaled_number);
 
     if exponent < 3.0 { //<1k, dont do anything
-        return format!("{:.3}", input);
+        return format!("{:.2}", input);
     }
 
     format!("{}{}", formatted_number, abbreviations[closest_exponent])
@@ -635,7 +635,7 @@ fn emoji(input: f64) -> String {
     emojicodes.insert('.',".");
 
     let mut emojistring = String::new();
-    for i in format!("{:.3}",input).chars() {
+    for i in format!("{:.2}",input).chars() {
         if let Some(&emoji) = emojicodes.get(&i) {
             emojistring.push_str(emoji);
         }
@@ -684,7 +684,7 @@ fn celeste(input: f64) -> String {
     celestecodes.insert('.', ".");
 
     let mut celestestring = String::new();
-    for i in format!("{:.3}",input).chars() {
+    for i in format!("{:.2}",input).chars() {
         if let Some(&celeste) = celestecodes.get(&i) {
             celestestring.push_str(celeste);
         }
@@ -707,7 +707,7 @@ fn heart(input: f64) -> String {
     heartcodes.insert('.', ".");
 
     let mut heartstring = String::new();
-    for i in format!("{:.3}",input).chars() {
+    for i in format!("{:.2}",input).chars() {
         if let Some(&heart) = heartcodes.get(&i) {
             heartstring.push_str(heart);
         }
@@ -716,7 +716,7 @@ fn heart(input: f64) -> String {
 }
 
 fn reverse(input: f64) -> String {
-    format!("{}",format!("{:.3}",input).chars().rev().collect::<String>())
+    format!("{}",format!("{:.2}",input).chars().rev().collect::<String>())
 }
 
 fn blind(_input: f64) -> String {
