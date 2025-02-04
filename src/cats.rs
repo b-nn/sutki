@@ -95,6 +95,36 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                         let cell_width = (ctx.screen_rect().width() - 8.0 * 8.0) / 7.0;
                         let cell_height = cell_width / 2.0;
                         let mut available_height = cell_height;
+                        let extra_effective = within_day_range(app.day, app.day_width, i as u32)
+                            && !app.asleep
+                            && app.current_challenge.id != 0;
+
+                        app.cats_visible[i] = extra_effective || app.cats_visible[i];
+                        app.cats_visible[i] = within_day_range(
+                            app.day,
+                            app.day_width,
+                            (i as i32 - 1).rem_euclid(31) as u32,
+                        ) || app.cats_visible[i];
+                        app.cats_visible[i] = within_day_range(
+                            app.day,
+                            app.day_width,
+                            (i as i32 - 2).rem_euclid(31) as u32,
+                        ) || app.cats_visible[i];
+                        app.cats_visible[i] = within_day_range(
+                            app.day,
+                            app.day_width,
+                            (i as i32 + 1).rem_euclid(31) as u32,
+                        ) || app.cats_visible[i];
+                        app.cats_visible[i] = within_day_range(
+                            app.day,
+                            app.day_width,
+                            (i as i32 + 2).rem_euclid(31) as u32,
+                        ) || app.cats_visible[i];
+
+                        if !app.cats_visible[i] {
+                            ui.add_sized([cell_width, cell_height], egui::Label::new("..."));
+                            return;
+                        }
 
                         // ui.add(make_daygif(i).max_height(height).max_width(width));
                         // I'll try getting the gifs to work later, though gifs may look ugly idk
@@ -125,10 +155,6 @@ pub fn update(app: &mut Game, ui: &mut Ui, ctx: &egui::Context) {
                         // );
 
                         ui.scope_builder(egui::UiBuilder::new().layer_id(interact_layer), |ui| {
-                            let extra_effective =
-                                within_day_range(app.day, app.day_width, i as u32)
-                                    && !app.asleep
-                                    && app.current_challenge.id != 0;
                             available_height -= ui
                                 .label(
                                     RichText::new(format!(

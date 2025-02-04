@@ -63,6 +63,7 @@ pub struct Game {
     cat_price_multipliers: [f64; 31],
     cat_price_5_multiplier: [f64; 31],
     cat_times: [f64; 31],
+    cats_visible: [bool; 31],
     currencies: [f64; 3],
     upgrades: Vec<Upgrade>,
     cat_strawberries: [i64; 31],
@@ -129,6 +130,7 @@ pub struct SaveStruct {
     zoom: f32,
     notation_format: Notations,
     uwumode: bool,
+    cats_visible: [bool; 31],
 }
 
 impl Default for SaveStruct {
@@ -146,7 +148,7 @@ impl Default for SaveStruct {
             unlocked_tiers: [true, false, false],
             cat_price_5_multiplier: [0.0; 31],
             modules: [
-                [true, false, false, true, false, false],
+                [true, true, false, true, false, false],
                 [false, true, false, true, false, false],
                 [false, false, true, false, false, false],
                 [false, false, false, false, true, false],
@@ -161,6 +163,7 @@ impl Default for SaveStruct {
             zoom: 1.0,
             notation_format: Notations::HybridScientific,
             uwumode: false,
+            cats_visible: [false; 31],
         }
     }
 }
@@ -249,6 +252,7 @@ impl Default for Game {
             zoom: 1.0,
             notation_format: Notations::HybridScientific,
             uwumode: false,
+            cats_visible: [false; 31],
         }
     }
 }
@@ -284,6 +288,7 @@ pub fn save_game(t: &mut Game) -> SaveStruct {
         zoom: t.zoom,
         notation_format: t.notation_format.clone(),
         uwumode: t.uwumode,
+        cats_visible: t.cats_visible,
     }
 }
 
@@ -343,6 +348,7 @@ pub fn load_game(t: SaveStruct) -> Game {
             get_challenges()[t.current_challenge].clone()
         },
         in_challenge: t.in_challenge,
+        cats_visible: t.cats_visible,
         ..Default::default()
     }
 }

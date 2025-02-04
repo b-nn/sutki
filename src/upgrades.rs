@@ -30,6 +30,9 @@ pub fn get_upgrades() -> Vec<Upgrade> {
                     x.cat_multipliers[i] += 1.036_f64.powi(31 - i as i32);
                 }
                 x.upgrades[1].price = 1500.0;
+                x.cats_visible[0] = true;
+                x.cats_visible[1] = true;
+                x.cats_visible[2] = true;
             },
             tier: 0
         },
@@ -47,6 +50,9 @@ pub fn get_upgrades() -> Vec<Upgrade> {
                     x.cat_multipliers[i] += 1.036_f64.powi(i as i32);
                 }
                 x.upgrades[0].price = 1500.0;
+                x.cats_visible[28] = true;
+                x.cats_visible[29] = true;
+                x.cats_visible[30] = true;
             },
             tier: 0
         },
